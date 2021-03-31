@@ -1,7 +1,10 @@
+import math
+from typing import Tuple
 
 
 class Agent:
-    def __init__(self, max_speed, max_stamina, acceleration, visual_scope, size):
+    def __init__(self, max_speed: float, max_stamina: float, acceleration: Tuple[float, float],
+                 visual_scope: Tuple[int, float], size: int):
         # State history
         self.history = []
 
@@ -21,10 +24,13 @@ class Agent:
         # Intrinsic State
         self.size = size
 
+        # Vision data (updates by observe_env)
+        self.vision = None
+
     def observe_env(self):
         """
         Get information about the environment within the visual scope
-        :return:
+        :return: Array with two rows, first indicating vision, the second distance
         """
         # TODO: How am I going to query the environment for a 1D view of my position at my current angle?
         # The agent shouldn't know about it's absolute position in the environment, but only the relative position.
@@ -41,8 +47,20 @@ class Agent:
         Given an angle and speed, attempt to move accordingly, constrained by acceleration and stamina
         :param angle: Target angle
         :param speed: Target sped
+        :return: change in relative x, relative y
         """
+        angular_acc, acc = self.acceleration
+        delta_angle = min(angular_acc, angle) if angle > 0 else max(-angular_acc, angle)
+        delta_speed = speed - acc if speed > 0 else speed + acc
+
+        self.angle += delta_angle
+        self.angle = - (360 - self.angle) if self.angle > 180 else self.angle
+        self.speed += min(delta_speed, self.max_speed - self.speed)
+
+        delta_x = int(self.speed * math.sin(self.angle*math.pi/180))
+        delta_y = int(self.speed * math.cos(self.angle*math.pi/180))
         self.observe_env()
+        return delta_x, delta_y
 
     def tag(self):
         """
@@ -66,5 +84,6 @@ class Agent:
             2: self.tag,
             3: self.communicate
         }
+        print(args, kwargs)
         act = actions.get(choice)
-        act(*args, **kwargs)
+        return act(*args, **kwargs)

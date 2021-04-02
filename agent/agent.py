@@ -3,7 +3,7 @@ from typing import Tuple
 
 
 class Agent:
-    def __init__(self, max_speed: float, max_stamina: float, acceleration: Tuple[float, float],
+    def __init__(self, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
                  visual_scope: Tuple[int, float], size: int):
         # State history
         self.history = []
@@ -11,7 +11,7 @@ class Agent:
         # Movement constraints
         self.max_speed = max_speed
         self.max_stamina = max_stamina
-        self.acceleration = acceleration
+        self.accel_limit = accel_limit
 
         # Movement State
         self.angle = 0
@@ -42,24 +42,36 @@ class Agent:
         """
         self.observe_env()
 
-    def move(self, angle, speed):
+    def move(self, ang_accel, accel):
         """
         Given an angle and speed, attempt to move accordingly, constrained by acceleration and stamina
-        :param angle: Target angle
-        :param speed: Target sped
+        :param ang_accel: angular acceleration
+        :param accel: acceleration
         :return: change in relative x, relative y
         """
-        angular_acc, acc = self.acceleration
-        delta_angle = min(angular_acc, angle) if angle > 0 else max(-angular_acc, angle)
-        delta_speed = speed - acc if speed > 0 else speed + acc
 
+        # Get acceleration limits
+        acc_limit, ang_acc_limit = self.accel_limit
+
+        # Get change in angle and speed due to the new acceleration given
+        delta_angle = min(ang_acc_limit, ang_accel) if ang_accel > 0 else max(-ang_acc_limit, ang_accel)
+        delta_speed = min(acc_limit, accel) if accel > 0 else max(accel, acc_limit)
+        # print(f"accel speed: {accel}, accel_angle: {ang_accel}")
+        # print(f"accel limit: {acc_limit}, angle_limit: {ang_acc_limit}")
+        # print(f"delta speed: {delta_speed}, delta_angle: {delta_angle}")
+
+        # Calculate new angle and speed of agent
         self.angle += delta_angle
-        self.angle = - (360 - self.angle) if self.angle > 180 else self.angle
+        self.angle %= (2*math.pi)
         self.speed += min(delta_speed, self.max_speed - self.speed)
+        print(f"REAL speed: {self.speed}, REAL angle: {self.angle}")
 
-        delta_x = int(self.speed * math.sin(self.angle*math.pi/180))
-        delta_y = int(self.speed * math.cos(self.angle*math.pi/180))
+        # Move the agent accordingly
+        delta_x = int(self.speed * math.cos(self.angle))
+        delta_y = int(self.speed * math.sin(self.angle))
+
         self.observe_env()
+
         return delta_x, delta_y
 
     def tag(self):

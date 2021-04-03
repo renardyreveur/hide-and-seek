@@ -12,18 +12,18 @@ np.set_printoptions(threshold=sys.maxsize)
 agent = Agent(max_speed=1., max_stamina=1., accel_limit=(1., 1.), visual_scope=(1, 1.), size=2)
 
 
-class Map():
+class Map:
 
     # 에이 전트 위치
-    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int, num_seekers: int):
+    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int = 1, num_seekers: int = 1):
         """
         다양한 환경에서의 학습을 시켜보자
         """
 
         self.num_hiders = num_hiders
         self.num_seekers = num_seekers
-        self.width = np.random.randint(max_width//2, max_width)
-        self.height = np.random.randint(max_height//2, max_height)
+        self.width = np.random.randint(max_width // 2, max_width)
+        self.height = np.random.randint(max_height // 2, max_height)
         self.num_walls = np.random.randint(1, max_num_walls)
 
         print(f'Map..\nwidth: {self.width}, height: {self.height}\nnumber of walls: {self.num_walls}')
@@ -37,7 +37,7 @@ class Map():
         self.agent_loc = self.init_agent_loc()
 
         print("Initial state of the map with agents(1: walls, 2: hiders, 3: seekers)")
-        print(self.map)
+        # print(self.map)
 
         # 아래 agent_state 함수 참고
         self.agent_vision = np.array([[0, 0, 0]] * (self.num_seekers + self.num_hiders))

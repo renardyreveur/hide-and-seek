@@ -64,7 +64,7 @@ class Agent:
         self.angle += delta_angle
         self.angle %= (2*math.pi)
         self.speed += min(delta_speed, self.max_speed - self.speed)
-        print(f"REAL speed: {self.speed}, REAL angle: {self.angle}")
+        # print(f"REAL speed: {self.speed}, REAL angle: {self.angle}")
 
         # Move the agent accordingly
         delta_x = int(self.speed * math.cos(self.angle))
@@ -96,6 +96,6 @@ class Agent:
             2: self.tag,
             3: self.communicate
         }
-        print(args, kwargs)
+        print(actions.get(choice).__name__, args, kwargs)
         act = actions.get(choice)
         return act(*args, **kwargs)

@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from test_agent import Agent
+from .test_agent import Agent
 
 # If you get a truncated representation, but want the full array, try
 np.set_printoptions(threshold=sys.maxsize)
@@ -12,16 +12,16 @@ np.set_printoptions(threshold=sys.maxsize)
 agent = Agent(max_speed=1., max_stamina=1., accel_limit=(1., 1.), visual_scope=(1, 1.), size=2)
 
 
-class Map():
+class Map:
 
     # 에이 전트 위치
-    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int, num_seekers: int):
+    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int = 1, num_seekers: int = 1):
         """
         다양한 환경에서의 학습을 시켜보자
         """
 
-        self.width = np.random.randint(2, max_width)
-        self.height = np.random.randint(2, max_height)
+        self.width = np.random.randint(max_width//2, max_width)
+        self.height = np.random.randint(max_height//2, max_height)
         self.num_walls = np.random.randint(1, max_num_walls)
         self.num_hiders = num_hiders
         self.num_seekers = num_seekers

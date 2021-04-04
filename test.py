@@ -139,9 +139,10 @@ if TEST == 1:
             break
 
 elif TEST == 2:
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter('walls.mp4', fourcc, 20.0, (world.shape[1], world.shape[0]))
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    # out = cv2.VideoWriter('walls.mp4', fourcc, 20.0, (world.shape[1], world.shape[0]))
 
+    history = []
     # Wall avoiding rule based policy
     while True:
         init_drawing()
@@ -158,24 +159,50 @@ elif TEST == 2:
         if 1 in vis[0]:
             ang_acc = random.randint(20, 45)
             acc = -10
+        elif len(set(history)) == 1:
+            ang_acc = random.randint(20, 45)
+            acc = -10
         else:
             ang_acc = 0
             acc = 5
 
         # Action based on Policy
         delta_x, delta_y = agent.action(choice=1, ang_accel=(ang_acc * math.pi / 180), accel=acc)
-        x += min(delta_x, world.shape[1] - (5 + agent.size) - x)
-        y += min(delta_y, world.shape[0] - (5 + agent.size) - y)
+        delta_x = min(delta_x, world.shape[1] - (5 + agent.size) - x)
+        delta_y = min(delta_y, world.shape[0] - (5 + agent.size) - y)
+
+        for w in envn.wall_loc:
+            w = w[::-1]
+            cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
+            if delta_x > 0 and delta_y > 0:
+                if x < int(w[0]) <= x+delta_x and y < int(w[1]) <= y+delta_y:
+                    delta_x, delta_y = 0, 0
+            elif delta_x > 0 > delta_y:
+                if x < int(w[0]) <= x + delta_x and y > int(w[1]) >= y + delta_y:
+                    delta_x, delta_y = 0, 0
+            elif delta_x < 0 < delta_y:
+                if x > int(w[0]) >= x + delta_x and y < int(w[1]) <= y + delta_y:
+                    delta_x, delta_y = 0, 0
+            elif delta_x <= 0 and delta_y <= 0:
+                if x > int(w[0]) > x + delta_x and y > int(w[1]) > y + delta_y:
+                    delta_x, delta_y = 0, 0
+
+        x += delta_x
+        y += delta_y
 
         # Clamp position to the walls if negative
         x = 5+agent.size if x < 5+agent.size else x
         y = 5+agent.size if y < 5+agent.size else y
 
-        out.write(show_world)
+        history.append((x, y))
+        if len(history) > 3:
+            history = history[1:]
+
+        # out.write(show_world)
         cv2.imshow("world", show_world)
         k = cv2.waitKey(0)
         if k == 27:
             break
 
     cv2.destroyAllWindows()
-    out.release()
+    # out.release()

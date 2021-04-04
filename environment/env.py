@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from agent import Agent
+from test_agent import Agent
 
 # If you get a truncated representation, but want the full array, try
 np.set_printoptions(threshold=sys.maxsize)
@@ -12,21 +12,21 @@ np.set_printoptions(threshold=sys.maxsize)
 agent = Agent(max_speed=1., max_stamina=1., accel_limit=(1., 1.), visual_scope=(1, 1.), size=2)
 
 
-class Map:
+class Map():
 
     # 에이 전트 위치
-    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int = 1, num_seekers: int = 1):
+    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int, num_seekers: int):
         """
         다양한 환경에서의 학습을 시켜보자
         """
 
+        self.width = np.random.randint(2, max_width)
+        self.height = np.random.randint(2, max_height)
+        self.num_walls = np.random.randint(1, max_num_walls)
         self.num_hiders = num_hiders
         self.num_seekers = num_seekers
-        self.width = np.random.randint(max_width // 2, max_width)
-        self.height = np.random.randint(max_height // 2, max_height)
-        self.num_walls = np.random.randint(1, max_num_walls)
 
-        print(f'Map..\nwidth: {self.width}, height: {self.height}\nnumber of walls: {self.num_walls}')
+        print(f'Map Size\nwidth: {self.width}, height: {self.height}\nnum_walls: {self.num_walls}')
         print(f'num_hiders: {self.num_hiders}, num_seekers: {self.num_seekers}')
 
         # Empty map 생성하기
@@ -34,9 +34,10 @@ class Map:
 
         # initial agent and wall locations
         self.wall_loc = self.make_walls()  # 이러면 맵 부르자 마자 wall 함수도 돌아가는 건가?
-        self.agent_loc = self.init_agent_loc()
+        agent_loc = self.init_agent_loc()
+        self.agent_loc = [tuple(np.array(i).reshape(-1)) for i in agent_loc]  # list of tuples
 
-        print("Initial state of the map with agents(1: walls, 2: hiders, 3: seekers)")
+        # print("Initial state of the map with agents(1: walls, 2: hiders, 3: seekers)")
         # print(self.map)
 
         # 아래 agent_state 함수 참고
@@ -88,8 +89,8 @@ class Map:
                 self.map[(x_, y_)] = 1
                 wall_loc.append((x_, y_))
 
-        print(f'wall_loc: {wall_loc}')
-        return wall_loc
+        walls = np.pad(np.array(wall_loc), pad_width=1, mode='constant', constant_values=1.)
+        return walls
 
     def init_agent_loc(self):
         """
@@ -100,7 +101,7 @@ class Map:
         """
         loc = []
 
-        while len(loc) <= self.num_hiders:
+        while len(loc) < self.num_hiders:
 
             h_x = np.random.randint(low=0, high=int(self.width / 2), size=1)
             h_y = np.random.randint(low=0, high=int(self.height / 2), size=1)
@@ -117,7 +118,7 @@ class Map:
                 self.map[(s_x, s_y)] = 2  # 3 -> 환경은 에이전트 각각이 하이더인지 시커인지 구분할 필요가 있는가?
                 loc.append((s_x, s_y))
 
-        print(f'init_agent_loc is fine.. {len(loc) == (self.num_hiders + self.num_seekers)}')
+        # print(f'init_agent_loc is fine.. {len(loc) == (self.num_hiders + self.num_seekers)}')
         return loc
 
     def agent_state(self, agent_action: int, agent_id):
@@ -149,5 +150,11 @@ class Map:
 
 
 if __name__ == "__main__":
-    test_map = Map(30, 30, 20, 2, 2)
+    print("Testing with a single agent")
+    test_map = Map(30, 30, 20, 1, 0)
+    world = test_map.map
+    print(f'Hello World! \n{world}')
+    # print(f'type(world): {world.dtype}, {type(world)}')
     # test_map.make_walls()  # If you wanna see the map, turn on the print code!
+    h1_init_loc = test_map.agent_loc
+    print(f'Initial position: {h1_init_loc}')

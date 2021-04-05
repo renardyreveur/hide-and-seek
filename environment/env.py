@@ -23,7 +23,7 @@ class Map:
 
         self.width = np.random.randint(max_width//2, max_width)
         self.height = np.random.randint(max_height//2, max_height)
-        self.num_walls = np.random.randint(1, max_num_walls)
+        self.num_walls = np.random.randint(max_num_walls//2, max_num_walls)
 
         self.num_hiders = num_hiders
         self.num_seekers = num_seekers

@@ -22,12 +22,13 @@ if BASE:
     world[:, SIZE - 6: SIZE - 1] = 1
     envn = None
 else:
-    envn = Map(SIZE, SIZE, 10)
+    envn = Map(SIZE, SIZE, 20)
     world = envn.map
 
 # ---- SINGLE AGENT ----
 max_speed = 30
 max_stamina = 10
+
 acceleration_limits = (15, 90 * math.pi / 180)
 scope = (140, 15)
 size = 5
@@ -171,18 +172,18 @@ elif TEST == 2:
             # Agent cannot cross walls
             for w in envn.wall_loc:
                 w = w[::-1]
-                cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
+                # cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
                 if delta_x > 0 and delta_y > 0:
-                    if x < w[0] <= x+delta_x and y < w[1] <= y + delta_y:
+                    if x <= w[0] <= x+delta_x and y <= w[1] <= y + delta_y:
                         delta_x, delta_y = 0, 0
                 elif delta_x > 0 > delta_y:
-                    if x < w[0] <= x + delta_x and y > w[1] >= y + delta_y:
+                    if x <= w[0] <= x + delta_x and y >= w[1] >= y + delta_y:
                         delta_x, delta_y = 0, 0
                 elif delta_x < 0 < delta_y:
-                    if x > w[0] >= x + delta_x and y < w[1] <= y + delta_y:
+                    if x >= w[0] >= x + delta_x and y <= w[1] <= y + delta_y:
                         delta_x, delta_y = 0, 0
-                elif delta_x <= 0 and delta_y <= 0:
-                    if x > w[0] > x + delta_x and y > w[1] > y + delta_y:
+                elif delta_x < 0 and delta_y < 0:
+                    if x >= w[0] >= x + delta_x and y >= w[1] >= y + delta_y:
                         delta_x, delta_y = 0, 0
 
         x += delta_x
@@ -198,7 +199,7 @@ elif TEST == 2:
 
         # out.write(show_world)
         cv2.imshow("world", show_world)
-        k = cv2.waitKey(50)
+        k = cv2.waitKey(0)
         if k == 27:
             break
 

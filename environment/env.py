@@ -15,7 +15,8 @@ agent = Agent(max_speed=1., max_stamina=1., accel_limit=(1., 1.), visual_scope=(
 class Map:
 
     # 에이 전트 위치
-    def __init__(self, max_height: int, max_width: int, max_num_walls: int, num_hiders: int = 1, num_seekers: int = 1):
+    def __init__(self, max_height: int, max_width: int, max_num_walls: int,
+                 borders: bool = True, num_hiders: int = 1, num_seekers: int = 1):
         """
         다양한 환경에서의 학습을 시켜보자
         """
@@ -23,23 +24,27 @@ class Map:
         self.width = np.random.randint(max_width//2, max_width)
         self.height = np.random.randint(max_height//2, max_height)
         self.num_walls = np.random.randint(1, max_num_walls)
+
         self.num_hiders = num_hiders
         self.num_seekers = num_seekers
 
         print(f'Map Size\nwidth: {self.width}, height: {self.height}\nnum_walls: {self.num_walls}')
         print(f'num_hiders: {self.num_hiders}, num_seekers: {self.num_seekers}')
 
-        # Empty map 생성하기
+        # Empty map 생성하기 (+ borders if requested)
         self.map = np.zeros((self.width, self.height))
+        if borders:
+            self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
+            self.width += 10
+            self.height += 10
 
         # initial agent and wall locations
         self.wall_loc = self.make_walls()  # 이러면 맵 부르자 마자 wall 함수도 돌아가는
         agent_loc = self.init_agent_loc()
-        self.agent_loc = [tuple(np.array(i).reshape(-1)) for i in agent_loc] # list of tuples
+        self.agent_loc = [tuple(np.array(i).reshape(-1)) for i in agent_loc]  # list of tuples
 
-        self.map = np.pad(np.array(self.map), pad_width=1, mode='constant', constant_values=1.)
         print("Initial state of the map with agents(1: walls, 2: hiders, 3: seekers)")
-        print(self.map)
+        # print(self.map)
 
         # 아래 agent_state 함수 참고
         self.agent_vision = np.array([[0, 0, 0]] * (self.num_seekers + self.num_hiders))

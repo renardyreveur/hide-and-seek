@@ -20,14 +20,10 @@ if BASE:
     world[SIZE - 6: SIZE - 1, :] = 1
     world[:, 0:5] = 1
     world[:, SIZE - 6: SIZE - 1] = 1
+    envn = None
 else:
     envn = Map(SIZE, SIZE, 10)
-    envn.make_walls()
     world = envn.map
-    world[0:5, :] = 1
-    world[world.shape[0] - 6: world.shape[0] - 1, :] = 1
-    world[:, 0:5] = 1
-    world[:, world.shape[1] - 6: world.shape[1] - 1] = 1
 
 # ---- SINGLE AGENT ----
 max_speed = 30
@@ -161,7 +157,7 @@ elif TEST == 2:
             acc = -10
         elif len(set(history)) == 1:
             ang_acc = random.randint(20, 45)
-            acc = -10
+            acc = 0
         else:
             ang_acc = 0
             acc = 5
@@ -171,21 +167,23 @@ elif TEST == 2:
         delta_x = min(delta_x, world.shape[1] - (5 + agent.size) - x)
         delta_y = min(delta_y, world.shape[0] - (5 + agent.size) - y)
 
-        for w in envn.wall_loc:
-            w = w[::-1]
-            cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
-            if delta_x > 0 and delta_y > 0:
-                if x < int(w[0]) <= x+delta_x and y < int(w[1]) <= y+delta_y:
-                    delta_x, delta_y = 0, 0
-            elif delta_x > 0 > delta_y:
-                if x < int(w[0]) <= x + delta_x and y > int(w[1]) >= y + delta_y:
-                    delta_x, delta_y = 0, 0
-            elif delta_x < 0 < delta_y:
-                if x > int(w[0]) >= x + delta_x and y < int(w[1]) <= y + delta_y:
-                    delta_x, delta_y = 0, 0
-            elif delta_x <= 0 and delta_y <= 0:
-                if x > int(w[0]) > x + delta_x and y > int(w[1]) > y + delta_y:
-                    delta_x, delta_y = 0, 0
+        if envn is not None:
+            # Agent cannot cross walls
+            for w in envn.wall_loc:
+                w = w[::-1]
+                cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
+                if delta_x > 0 and delta_y > 0:
+                    if x < w[0] <= x+delta_x and y < w[1] <= y + delta_y:
+                        delta_x, delta_y = 0, 0
+                elif delta_x > 0 > delta_y:
+                    if x < w[0] <= x + delta_x and y > w[1] >= y + delta_y:
+                        delta_x, delta_y = 0, 0
+                elif delta_x < 0 < delta_y:
+                    if x > w[0] >= x + delta_x and y < w[1] <= y + delta_y:
+                        delta_x, delta_y = 0, 0
+                elif delta_x <= 0 and delta_y <= 0:
+                    if x > w[0] > x + delta_x and y > w[1] > y + delta_y:
+                        delta_x, delta_y = 0, 0
 
         x += delta_x
         y += delta_y
@@ -200,7 +198,7 @@ elif TEST == 2:
 
         # out.write(show_world)
         cv2.imshow("world", show_world)
-        k = cv2.waitKey(0)
+        k = cv2.waitKey(50)
         if k == 27:
             break
 

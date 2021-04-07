@@ -96,7 +96,7 @@ def get_vision(env, position, orientation, constraints):
         vis_pt = (int(vis_pt[0]), int(vis_pt[1]))
 
         sight_line = get_line((x_pos, y_pos), vis_pt)
-        sight_value = [env[int(ye), int(xe)] if env.shape[0] > int(xe) > 0 and env.shape[0] > int(ye) > 0 else 1
+        sight_value = [env[int(ye), int(xe)] if env.shape[1] > int(xe) > 0 and env.shape[0] > int(ye) > 0 else 1
                        for xe, ye in sight_line]
 
         try:
@@ -173,16 +173,16 @@ elif TEST == 2:
             for w in envn.wall_loc:
                 w = w[::-1]
                 # cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
-                if delta_x > 0 and delta_y > 0:
+                if delta_x >= 0 and delta_y >= 0:
                     if x <= w[0] <= x+delta_x and y <= w[1] <= y + delta_y:
                         delta_x, delta_y = 0, 0
-                elif delta_x > 0 > delta_y:
+                elif delta_x >= 0 >= delta_y:
                     if x <= w[0] <= x + delta_x and y >= w[1] >= y + delta_y:
                         delta_x, delta_y = 0, 0
-                elif delta_x < 0 < delta_y:
+                elif delta_x <= 0 <= delta_y:
                     if x >= w[0] >= x + delta_x and y <= w[1] <= y + delta_y:
                         delta_x, delta_y = 0, 0
-                elif delta_x < 0 and delta_y < 0:
+                elif delta_x <= 0 and delta_y <= 0:
                     if x >= w[0] >= x + delta_x and y >= w[1] >= y + delta_y:
                         delta_x, delta_y = 0, 0
 
@@ -199,7 +199,7 @@ elif TEST == 2:
 
         # out.write(show_world)
         cv2.imshow("world", show_world)
-        k = cv2.waitKey(0)
+        k = cv2.waitKey(1)
         if k == 27:
             break
 

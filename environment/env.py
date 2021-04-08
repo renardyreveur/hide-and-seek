@@ -33,6 +33,7 @@ class Map:
 
         # Empty map 생성하기 (+ borders if requested)
         self.map = np.zeros((self.width, self.height))
+        self.borders = borders
         if borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
             self.width += 10
@@ -52,6 +53,15 @@ class Map:
         # get number of agents nearby 생각해보니까 몇 명이 있는지는 모르고 누군가가 있는것 같다?
         # seeker는 hider에 대한 정보를 어떻게 이용할 것인가? 궁금!
         self.agent_alarm = np.array([[0]] * (self.num_seekers + self.num_hiders))
+
+    def refresh_map(self):
+        # Empty map 생성하기 (+ borders if requested)
+        self.map = np.zeros((self.width-10, self.height-10))
+        if self.borders:
+            self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
+
+        for pt in self.wall_loc:
+            self.map[pt] = 1
 
     # Make walls
     def make_walls(self):  # (x,y) is the starting point

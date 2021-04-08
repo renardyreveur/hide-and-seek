@@ -3,8 +3,12 @@ from typing import Tuple
 
 
 class Agent:
-    def __init__(self, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
+    def __init__(self, agt_class: int, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
                  visual_scope: Tuple[int, float], size: int):
+        # Agent Class 2 - hider, 3 - seeker
+        self.agt_class = agt_class
+        assert self.agt_class in [2, 3]
+
         # State history
         self.history = []
 

@@ -8,12 +8,6 @@ from numba import njit
 from agent import Agent
 from environment import Map
 
-# ---- ENVIRONMENT ----
-SIZE = 1000
-show_world = None
-envn = Map(SIZE, SIZE, 20)
-world = envn.map
-
 # ---- SINGLE AGENT ----
 max_speed = 30
 max_stamina = 10
@@ -23,8 +17,13 @@ scope = (90, 55)
 size = 5
 agent1 = Agent(2, max_speed, max_stamina, acceleration_limits, scope, size)
 agent2 = Agent(3, max_speed, max_stamina, acceleration_limits, scope, size)
-
 agents = [agent1, agent2]
+
+# ---- ENVIRONMENT ----
+SIZE = 1000
+show_world = None
+envn = Map(SIZE, SIZE, 20, True, 1, 1, max_speed, max_stamina, acceleration_limits, scope, size)
+world = envn.map
 
 
 def init_drawing():

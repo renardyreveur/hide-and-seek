@@ -83,7 +83,9 @@ class Agent:
         For hiders: Tag the checkpoint
         For seekers: Tag the hiders
         """
+        print("TAGGG!!!!!")
         self.observe_env()
+        return 0, 0
 
     def action(self, choice, *args, **kwargs):
         """
@@ -100,6 +102,8 @@ class Agent:
             2: self.tag,
             3: self.communicate
         }
-        print(actions.get(choice).__name__, args, kwargs)
+        if self.agt_class == 3:
+            print(actions.get(choice).__name__, args, kwargs)
+
         act = actions.get(choice)
         return act(*args, **kwargs)

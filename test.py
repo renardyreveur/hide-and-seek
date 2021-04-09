@@ -19,7 +19,7 @@ max_speed = 30
 max_stamina = 10
 
 acceleration_limits = (15, 90 * math.pi / 180)
-scope = (140, 15)
+scope = (90, 55)
 size = 5
 agent1 = Agent(2, max_speed, max_stamina, acceleration_limits, scope, size)
 agent2 = Agent(3, max_speed, max_stamina, acceleration_limits, scope, size)
@@ -80,8 +80,10 @@ def get_vision(env, position, orientation, constraints):
     view = []
     dist = []
 
+    # Get visual scope line
     vis_line = get_line((xl, yl), (xr, yr), dist=int(2 * math.sqrt(dist_scope ** 2 + max_dist ** 2)))
 
+    # For every line from the agent to the visual limit
     for vis_pt in vis_line:
         vis_pt = (int(vis_pt[0]), int(vis_pt[1]))
 
@@ -89,12 +91,22 @@ def get_vision(env, position, orientation, constraints):
         sight_value = [env[int(ye), int(xe)] if env.shape[1] > int(xe) > 0 and env.shape[0] > int(ye) > 0 else 1
                        for xe, ye in sight_line]
 
-        try:
-            dist.append(sight_value.index(1))
-            view.append(1)
-        except Exception:  # ValueError, but numba jit only supports Exception
+        # Test for object in sight
+        whs_query = [np.inf, np.inf, np.inf]
+        if 1 in sight_value[2:]:
+            whs_query[0] = sight_value[2:].index(1) + 2
+        if 2 in sight_value[2:]:
+            whs_query[1] = sight_value[2:].index(2) + 2
+        if 3 in sight_value[2:]:
+            whs_query[2] = sight_value[2:].index(3) + 2
+
+        # If not object in sight, 0(background) in view at inf dist.
+        if whs_query[0] == np.inf and whs_query[1] == np.inf and whs_query[2] == np.inf:
             dist.append(np.inf)
             view.append(0)
+        else:
+            dist.append(min(whs_query))
+            view.append(whs_query.index(min(whs_query)) + 1)
 
     view = np.asarray(view)
     dist = np.asarray(dist)
@@ -109,7 +121,8 @@ def get_vision(env, position, orientation, constraints):
 # Initial Position
 agent_pos = []
 for a in agents:
-    agent_pos.append([random.randint(envn.width//3, envn.width*2//3), random.randint(envn.height//3, envn.height*2//3)])
+    agent_pos.append(
+        [random.randint(envn.width // 3, envn.width * 2 // 3), random.randint(envn.height // 3, envn.height * 2 // 3)])
 
 history = [[], []]
 
@@ -138,18 +151,26 @@ while True:
         cv2.line(show_world, tuple(int(n) for n in pa), tuple(int(n) for n in pb), (200, 0, 200), 2)
 
         # Policy
-        if 1 in vis[0]:
-            ang_acc = random.randint(20, 45)
-            acc = -10
-        elif len(set(history[i])) == 1:
-            ang_acc = random.randint(20, 45)
-            acc = 0
-        else:
-            ang_acc = 0
-            acc = 5
+        if 1 in vis[0]:  # If wall in vision, rotate
+            action = 1
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
+                            "accel": -10}
+
+        elif len(set(history[i])) == 1:  # If stationary for 3 time steps rotate
+            action = 1
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
+                            "accel": 0}
+
+        elif agt.agt_class == 3 and 2 in vis[0] and vis[1][list(vis[0]).index(2)] < 60:  # If hider in front, tag
+            action = 2
+            action_param = {}
+
+        else:  # When there isn't a special event, just move forward
+            action = 1
+            action_param = {"ang_accel": (0 * math.pi / 180), "accel": 5}
 
         # Action based on Policy
-        delta_x, delta_y = agt.action(choice=1, ang_accel=(ang_acc * math.pi / 180), accel=acc)
+        delta_x, delta_y = agt.action(choice=action, **action_param)
         delta_x = min(delta_x, world.shape[1] - (5 + agt.size) - x)
         delta_y = min(delta_y, world.shape[0] - (5 + agt.size) - y)
 

@@ -14,6 +14,7 @@ from agent import Agent
 np.set_printoptions(threshold=sys.maxsize)
 
 
+
 class Map:
 
     # 에이 전트 위치
@@ -68,11 +69,14 @@ class Map:
             self.agent_loc.append(self.init_agent_loc())
 
         print(f'self.agent_loc: {self.agent_loc}')
-        print(f'len(self.agent_loc) should be equal to the number of hiders and seekers: {len(self.agent_loc)}')
+        # print(f'len(self.agent_loc) should be equal to the number of hiders and seekers: {len(self.agent_loc)}')
 
         # 아래 agent_state 함수 참고
         av = []
         self.agent_vision = [av.append([0]) for i in range(self.num_seekers + self.num_hiders)]
+
+        self.history = [[] for j in range(self.num_seekers + self.num_hiders)]
+
 
         # get number of agents nearby 생각해보니까 몇 명이 있는지는 모르고 누군가가 있는것 같다?
         # seeker는 hider에 대한 정보를 어떻게 이용할 것인가? 궁금!
@@ -164,61 +168,90 @@ class Map:
         loc = [tuple(np.array(i).reshape(-1)) for i in loc]
         return loc
 
-    def agent_state(self, agent_action: int, agent_id: int):
+    def agent_state(self, show_world):
         """
+
         environment should tell agent some information
         self.agent_loc -> 알면 안되지!
         self.agent_vision
         self.agent_alarm
 
         """
-        (x, y) = self.agent_loc[agent_id][-1]  # latest position of the agent_i
         # for i in range(len(self.agents)):
 
-        if agent_action == 1:  # move
+        for i, agt in enumerate(self.agents):
+            x, y = self.agent_loc[i][-1] # latest position of the agent_i
+            # world[y, x] = agt.agt_class -> map에서 hider의 위치는 2로, seeker는 3으로 되어있음
+
+            # Draw Agent
+            if agt.agt_class == 2:
+                color = (200, 150, 0)
+            else:
+                color = (0, 200, 200)
+            cv2.circle(show_world, (x, y), agt.size, color, -1)
 
             # Get agent vision
-            agent = self.agents[agent_id]
-            (pa, pb), vis = self.get_vision((x, y), agent.angle, agent.scope, agent_id)
+            (pa, pb), vis = self.get_vision(world, (x, y), agt.angle, agt.scope)
 
-            # Simple Policy
-            if 1 in vis[0]:
-                ang_acc = random.randint(20, 45)
-                acc = -10
+            # Draw vision
+            cv2.imshow("vision", cv2.resize((vis[0] * 255).astype('uint8'), (10, vis[0].shape[0] * 10),
+                                            interpolation=cv2.INTER_NEAREST))
+            cv2.line(show_world, tuple(int(n) for n in pa), tuple(int(n) for n in pb), (200, 0, 200), 2)
 
-            else:
-                ang_acc = np.random.choice(np.array([0, random.randint(20, 45)]), 1)
-                acc = 5
+            # Policy
+            if 1 in vis[0]:  # If wall in vision, rotate
+                action = 1
+                action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
+                                "accel": -10}
 
-            delta_x, delta_y = agent.action(choice=1, ang_accel=(ang_acc * math.pi / 180), accel=acc)
-            delta_x = min(delta_x, world.shape[1] - (5 + agent.size) - x)
-            delta_y = min(delta_y, world.shape[0] - (5 + agent.size) - y)
+            elif len(set(self.history[i])) == 1:  # If stationary for 3 time steps rotate
+                action = 1
+                action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
+                                "accel": 0}
 
-            # Agent cannot cross walls
-            for w in self.wall_loc:
-                w = w[::-1]
-                # cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
-                if delta_x >= 0 and delta_y >= 0:
-                    if x <= w[0] <= x + delta_x and y <= w[1] <= y + delta_y:
-                        delta_x, delta_y = 0, 0
-                elif delta_x >= 0 >= delta_y:
-                    if x <= w[0] <= x + delta_x and y >= w[1] >= y + delta_y:
-                        delta_x, delta_y = 0, 0
-                elif delta_x <= 0 <= delta_y:
-                    if x >= w[0] >= x + delta_x and y <= w[1] <= y + delta_y:
-                        delta_x, delta_y = 0, 0
-                elif delta_x <= 0 and delta_y <= 0:
-                    if x >= w[0] >= x + delta_x and y >= w[1] >= y + delta_y:
-                        delta_x, delta_y = 0, 0
+            elif agt.agt_class == 3 and 2 in vis[0] and vis[1][
+                list(vis[0]).index(2)] < 60:  # If hider in front, tag
+                action = 2
+                action_param = {}
 
-            x += delta_x
-            y += delta_y
+            else:  # When there isn't a special event, just move forward
+                action = 1
+                action_param = {"ang_accel": (0 * math.pi / 180), "accel": 5}
+
+            # Action based on Policy
+            delta_x, delta_y = agt.action(choice=action, **action_param)
+            delta_x = min(delta_x, world.shape[1] - (5 + agt.size) - x)
+            delta_y = min(delta_y, world.shape[0] - (5 + agt.size) - y)
+
+            if envn is not None:
+                # Agent cannot cross walls
+                for w in envn.wall_loc:
+                    w = w[::-1]
+                    # cv2.circle(show_world, tuple(int(ee) for ee in w), 3, (0, 0, 255), -1)
+                    if delta_x >= 0 and delta_y >= 0:
+                        if x <= w[0] <= x + delta_x and y <= w[1] <= y + delta_y:
+                            delta_x, delta_y = 0, 0
+                    elif delta_x >= 0 >= delta_y:
+                        if x <= w[0] <= x + delta_x and y >= w[1] >= y + delta_y:
+                            delta_x, delta_y = 0, 0
+                    elif delta_x <= 0 <= delta_y:
+                        if x >= w[0] >= x + delta_x and y <= w[1] <= y + delta_y:
+                            delta_x, delta_y = 0, 0
+                    elif delta_x <= 0 and delta_y <= 0:
+                        if x >= w[0] >= x + delta_x and y >= w[1] >= y + delta_y:
+                            delta_x, delta_y = 0, 0
+
+            self.agent_loc[i][-1][0] += delta_x
+            self.agent_loc[i][-1][1] += delta_y
 
             # Clamp position to the walls if negative
-            x = 5 + agent.size if x < 5 + agent.size else x
-            y = 5 + agent.size if y < 5 + agent.size else y
+            self.agent_loc[i][-1][0] = 5 + agt.size if self.agent_loc[i][-1][0] < 5 + agt.size else self.agent_loc[i][-1][0]
+            self.agent_loc[i][-1][1] = 5 + agt.size if self.agent_loc[i][-1][1] < 5 + agt.size else self.agent_loc[i][-1][1]
 
-            self.agent_loc[agent_id] = (x, y)
+            self.history[i].append((x, y))
+            if len(self.history[i]) > 3:
+                self.history[i] = self.history[i][1:]
+
 
         # 엄청 가까우면(30*30이내) - alarm: 10
         # 근처에 있는거 같으면(100*100이내) - alarm: 5
@@ -231,25 +264,30 @@ class Map:
         near = [(x, y) for x in alarm_near_x for y in alarm_near_x]
         far = [(x, y) for x in alarm_far_x for y in alarm_far_x]
 
-        als_near = [tuple(map(operator.add, self.agent_loc[agent_id], n)) for n in near]
-        # arange가 크면 맵 밖으로 나가게 되서 clamp an integer(x) to range()
-        als_near = [(sorted(al[0], 0, self.width)[1], sorted(al[1], 0, self.height)[1]) for al in als_near]
-        self.agent_alarm[agent_id] = 5 if (2 or 3) in [self.map[al] for al in als_near] else 0
+        for i, agt in enumerate(self.agents):
+            x, y = self.agent_loc[i][-1]  # latest position of the agent_i
 
-        als_far = [tuple(map(operator.add, self.agent_loc[agent_id], n)) for n in far]
-        als_far = [(sorted(al[0], 0, self.width)[1], sorted(al[1], 0, self.height)[1]) for al in als_far]
-        self.agent_alarm[agent_id] = 10 if (2 or 3) in [self.map[al] for al in als_far] else 0
+            als_near = [tuple(map(operator.add, (x, y), n)) for n in near]
+            # arange가 크면 맵 밖으로 나가게 되서 clamp an integer(x) to range()
+            als_near = [(sorted(al[0], 0, self.width)[1], sorted(al[1], 0, self.height)[1]) for al in als_near]
+            self.agent_alarm[i] = 5 if (2 or 3) in [self.map[al] for al in als_near] else 0
+
+            als_far = [tuple(map(operator.add, (x, y), n)) for n in far]
+            als_far = [(sorted(al[0], 0, self.width)[1], sorted(al[1], 0, self.height)[1]) for al in als_far]
+            self.agent_alarm[i] = 10 if (2 or 3) in [self.map[al] for al in als_far] else 0
 
         # if agent.stamina == 0: means dead, return None from then, no update anymore
 
         # return self.agent_vision, self.agent_alarm
         return None
 
-    def init_drawing(self, world=None):
-        global show_world
+    def init_drawing(self):
+        global show_world, envn, world
+        self.refresh_map()
         world = self.map
         show_world = cv2.cvtColor((world * 255).astype('uint8'), cv2.COLOR_GRAY2BGR)
         show_world[np.where((show_world == (255, 255, 255)).all(axis=2))] = (255, 0, 0)
+
 
     def get_line(self, p1, p2, dist=None):
         x1, y1 = p1
@@ -271,8 +309,7 @@ class Map:
                 positions.append((xi, yi))
         return positions
 
-    def get_vision(self, position, orientation, constraints, agent_id):
-        env = self.map
+    def get_vision(self, env, position, orientation, constraints):
 
         x_pos, y_pos = position
         angular_scope, dist_scope = constraints
@@ -293,8 +330,10 @@ class Map:
         view = []
         dist = []
 
+        # Get visual scope line
         vis_line = self.get_line((xl, yl), (xr, yr), dist=int(2 * math.sqrt(dist_scope ** 2 + max_dist ** 2)))
 
+        # For every line from the agent to the visual limit
         for vis_pt in vis_line:
             vis_pt = (int(vis_pt[0]), int(vis_pt[1]))
 
@@ -302,23 +341,35 @@ class Map:
             sight_value = [env[int(ye), int(xe)] if env.shape[1] > int(xe) > 0 and env.shape[0] > int(ye) > 0 else 1
                            for xe, ye in sight_line]
 
-            try:
-                dist.append(sight_value.index(1))
-                view.append(1)
-            except Exception:  # ValueError, but numba jit only supports Exception
+            # Test for object in sight
+            whs_query = [np.inf, np.inf, np.inf]
+            if 1 in sight_value[2:]:
+                whs_query[0] = sight_value[2:].index(1) + 2
+            if 2 in sight_value[2:]:
+                whs_query[1] = sight_value[2:].index(2) + 2
+            if 3 in sight_value[2:]:
+                whs_query[2] = sight_value[2:].index(3) + 2
+
+            # If not object in sight, 0(background) in view at inf dist.
+            if whs_query[0] == np.inf and whs_query[1] == np.inf and whs_query[2] == np.inf:
                 dist.append(np.inf)
                 view.append(0)
+            else:
+                dist.append(min(whs_query))
+                view.append(whs_query.index(min(whs_query)) + 1)
 
         view = np.asarray(view)
         dist = np.asarray(dist)
         # numba complains, probably due to type differences, just return as tuple for the moment
         # vision = np.stack([view, dist], axis=0)
-        self.agent_vision = (view, dist)
-
         return ((xl, yl), (xr, yr)), (view, dist)
 
-    def step(self, choice, agent_id):
-        self.agent_state(choice, agent_id)
+
+# step함수가 클래스 내에 정의될 필요가 있는지, while loop 안에서 타임스텝이 움직일 때마다,
+# 에이전트에게 정보를 전달하고, 환경을 업데이트 시켜주고,
+#     def step(self, choice, agent_id):
+#         self.agent_state(show_world)
+
 
 
 if __name__ == "__main__":
@@ -334,14 +385,16 @@ if __name__ == "__main__":
     envn = Map(50, 50, 20, True, 1, 1, max_speed, max_stamina, acceleration_limits, scope, size)
     world = envn.map
 
-    for i in range(3):
-        envn.step(1, 0)
-        envn.step(1, 1)
+    envn.init_drawing()
+    for i in range(10):
+        envn.agent_state(show_world)
 
-        i = 0
-        for agent in envn.agents:
-            cv2.circle(world, envn.init_agent_loc[i], agent.size, (0, 200, 200), -1)
-            i += 1
+        cv2.imshow("world", show_world)
+        k = cv2.waitKey(0)
+        if k == 5:
+            break
 
-        cv2.imshow("map", world)
-        cv2.waitKey(0)
+    """
+    self.agent_loc[i][-1][0] += delta_x
+    TypeError: 'tuple' object does not support item assignment
+    """

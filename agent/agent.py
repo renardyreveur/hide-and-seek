@@ -1,109 +1,65 @@
 import math
+import random
+
+import numpy as np
 from typing import Tuple
 
 
 class Agent:
     def __init__(self, agt_class: int, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
                  visual_scope: Tuple[int, float], size: int):
-        # Agent Class 2 - hider, 3 - seeker
-        self.agt_class = agt_class
+        # Fixed attributes
+        self.max_speed = max_speed
+        self.max_stamina = max_stamina
+        self.accel_limit = accel_limit
+        self.scope = visual_scope                 # (angular scope (0-360), linear scope)
+        self.size = size
+        self.agt_class = agt_class                # 2 - Hider, 3 - Seeker
         assert self.agt_class in [2, 3]
+
+        # Dynamic attributes
+        self.vision = np.zeros((2, self.scope[1]))  # First row - vision, Second row - distance
+        self.sound = (0, 0)
+        self.comm = (0, 0)
 
         # State history
         self.history = []
 
-        # Movement constraints
-        self.max_speed = max_speed
-        self.max_stamina = max_stamina
-        self.accel_limit = accel_limit
-
-        # Movement State
+        # --- Movement State ---
         self.angle = 0
         self.speed = 0
         self.stamina = max_stamina
 
-        # Observation
-        self.scope = visual_scope
-
-        # Intrinsic State
-        self.size = size
-
-        # Vision data (updates by observe_env)
-        self.vision = None
-
-    def observe_env(self):
-        """
-        Get information about the environment within the visual scope
-        :return: Array with two rows, first indicating vision, the second distance
-        """
-        # TODO: How am I going to query the environment for a 1D view of my position at my current angle?
-        # The agent shouldn't know about it's absolute position in the environment, but only the relative position.
-        pass
-
-    def communicate(self):
-        """
-        Send a 'near-by' signal to the same team agents
-        """
-        self.observe_env()
-
-    def move(self, ang_accel, accel):
-        """
-        Given an angle and speed, attempt to move accordingly, constrained by acceleration and stamina
-        :param ang_accel: angular acceleration
-        :param accel: acceleration
-        :return: change in relative x, relative y
-        """
-
-        # Get acceleration limits
-        acc_limit, ang_acc_limit = self.accel_limit
-
-        # Get change in angle and speed due to the new acceleration given
-        delta_angle = min(ang_acc_limit, ang_accel) if ang_accel > 0 else max(-ang_acc_limit, ang_accel)
-        delta_speed = min(acc_limit, accel) if accel > 0 else max(accel, acc_limit)
-        # print(f"accel speed: {accel}, accel_angle: {ang_accel}")
-        # print(f"accel limit: {acc_limit}, angle_limit: {ang_acc_limit}")
-        # print(f"delta speed: {delta_speed}, delta_angle: {delta_angle}")
-
-        # Calculate new angle and speed of agent
-        self.angle += delta_angle
-        self.angle %= (2*math.pi)
-        self.speed += min(delta_speed, self.max_speed - self.speed)
-        # print(f"REAL speed: {self.speed}, REAL angle: {self.angle}")
-
-        # Move the agent accordingly
-        delta_x = int(self.speed * math.cos(self.angle))
-        delta_y = int(self.speed * math.sin(self.angle))
-
-        self.observe_env()
-
-        return delta_x, delta_y
-
-    def tag(self):
-        """
-        For hiders: Tag the checkpoint
-        For seekers: Tag the hiders
-        """
-        print("TAGGG!!!!!")
-        self.observe_env()
-        return 0, 0
-
-    def action(self, choice, *args, **kwargs):
+    def action(self):
         """
         At every time step an action is performed.
-        The action is one of three {"move", "tag", "communicate"}
-        Every action ends with an agent state update (observation)
-        :param choice: Integer, choice between the three possible actions
-        :param args: Arguments for the chosen action
-        :param kwargs: Keyword Arguments for the chosen action
-        :return:
-        """
-        actions = {
-            1: self.move,
-            2: self.tag,
-            3: self.communicate
-        }
-        if self.agt_class == 3:
-            print(actions.get(choice).__name__, args, kwargs)
+        The action is one of three {1: "move", 2: "tag", 3: "communicate"}
 
-        act = actions.get(choice)
-        return act(*args, **kwargs)
+        Given agent state, return best action based on policy
+
+        :return: action choice, action parameters
+        """
+        # --- Policy ---
+        # If wall in vision, rotate
+        if 1 in self.vision[0]:
+            action = 1
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
+                            "accel": -10}
+
+        # If stationary for 3 time steps rotate
+        elif len(set(self.history)) == 1:
+            action = 1
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
+                            "accel": 0}
+
+        # If hider in front, tag
+        elif self.agt_class == 3 and 2 in self.vision[0] and self.vision[1][list(self.vision[0]).index(2)] < 60:
+            action = 2
+            action_param = {}
+
+        # When there isn't a special event, just move forward
+        else:
+            action = 1
+            action_param = {"ang_accel": (0 * math.pi / 180), "accel": 5}
+
+        return action, action_param

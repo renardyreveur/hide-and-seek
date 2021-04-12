@@ -114,6 +114,37 @@ def get_vision(env, position, orientation, constraints):
     return ((xl, yl), (xr, yr)), (view, dist)
 
 
+def move(self, ang_accel, accel):
+    """
+    Given an angle and speed, attempt to move accordingly, constrained by acceleration and stamina
+    :param ang_accel: angular acceleration
+    :param accel: acceleration
+    :return: change in relative x, relative y
+    """
+
+    # Get acceleration limits
+    acc_limit, ang_acc_limit = self.accel_limit
+
+    # Get change in angle and speed due to the new acceleration given
+    delta_angle = min(ang_acc_limit, ang_accel) if ang_accel > 0 else max(-ang_acc_limit, ang_accel)
+    delta_speed = min(acc_limit, accel) if accel > 0 else max(accel, acc_limit)
+    # print(f"accel speed: {accel}, accel_angle: {ang_accel}")
+    # print(f"accel limit: {acc_limit}, angle_limit: {ang_acc_limit}")
+    # print(f"delta speed: {delta_speed}, delta_angle: {delta_angle}")
+
+    # Calculate new angle and speed of agent
+    self.angle += delta_angle
+    self.angle %= (2 * math.pi)
+    self.speed += min(delta_speed, self.max_speed - self.speed)
+    # print(f"REAL speed: {self.speed}, REAL angle: {self.angle}")
+
+    # Move the agent accordingly
+    delta_x = int(self.speed * math.cos(self.angle))
+    delta_y = int(self.speed * math.sin(self.angle))
+
+    return delta_x, delta_y
+
+
 # ----------------------------------------------------------------------
 
 # ---- TESTS ----

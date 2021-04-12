@@ -1,1 +1,1 @@
-from .env import Map
+from .env import World

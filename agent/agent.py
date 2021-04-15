@@ -12,15 +12,15 @@ class Agent:
         self.max_speed = max_speed
         self.max_stamina = max_stamina
         self.accel_limit = accel_limit
-        self.scope = visual_scope                 # (angular scope (0-360), linear scope)
+        self.scope = visual_scope                   # (angular scope (0-360), linear scope)
         self.size = size
-        self.agt_class = agt_class                # 2 - Hider, 3 - Seeker
+        self.agt_class = agt_class                  # 2 - Hider, 3 - Seeker
         assert self.agt_class in [2, 3]
 
         # Dynamic attributes
         self.vision = np.zeros((2, self.scope[1]))  # First row - vision, Second row - distance
-        self.sound = (0, 0)
-        self.comm = (0, 0)
+        self.sound = [(0, 0)]
+        self.comm = [(0, 0)]
 
         # State history
         self.history = []

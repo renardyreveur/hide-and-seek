@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from itertools import compress
 
 
 def get_line(p1, p2, dist=None):
@@ -80,9 +81,106 @@ def get_vision(env, position, orientation, scope):
     return ((xl, yl), (xr, yr)), (view, dist)
 
 
-def get_sound():
-    pass
+# TODO: 그 딱 경계에 있을 때 처리해주
+def get_sound(locs, agents, agent_id, sound_limit):
 
+    # position of the agent_i
+    pos_x, pos_y = locs[agent_id]
+    vision_ang = agents[agent_id].angle
 
-def get_communication():
-    pass
+    # agent_i가 바라보고 있는 방향의 벡터
+    v_x, v_y = (math.cos(vision_ang), math.sin(vision_ang))
+
+    # positions of the other agents
+    # strength of the sound = 1/(distance**2)
+    dist = []
+    orient = []
+    for i in range(len(locs)):
+        if i != agent_id:
+            p_x, p_y = locs[i]
+            dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
+
+            # 나로부터 i번째 agent의 포지션으로의 벡터
+            vi_x, vi_y = (p_x - pos_x, p_y - pos_y)
+
+            # Direct way to computing clockwise angle between 2 vectors
+            # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
+            dot = v_x*vi_x + v_y*vi_y
+            det = v_x*vi_y - v_y*vi_x
+
+            # The atan2() function returns a value in the range -pi to pi radians.
+            ang_i = math.atan2(det, dot)
+
+            if -math.pi <= ang_i < -0.75*math.pi:
+                orient.append(1)
+            elif -0.75*math.pi <= ang_i < -0.5*math.pi:
+                orient.append(2)
+            elif -0.5*math.pi <= ang_i < -0.25*math.pi:
+                orient.append(3)
+            elif -0.25*math.pi <= ang_i < 0:
+                orient.append(4)
+            elif 0 <= ang_i < 0.25*math.pi:
+                orient.append(5)
+            elif 0.25*math.pi <= ang_i < 0.5*math.pi:
+                orient.append(6)
+            elif 0.5*math.pi <= ang_i < 0.75*math.pi:
+                orient.append(7)
+            else:
+                orient.append(8)
+
+    # all floats to 4 decimal places
+    streng = [round(1 / i, 4) for i in dist]
+
+    # get boolean list using sound_limit
+    lim = [[i > sound_limit for i in streng]]
+
+    # filtering a list based on a list of booleans(lim)
+    strength = list(compress(streng, lim))
+    orientation = list(compress(orient, lim))
+
+    return orientation, strength
+
+# get_sound에서의 dist는 sound limit 안에 해당하는 에이전트에 대해서만 strength 계산에 있어 사용되는 반면,
+# get_communication은 제한이 없고, 절대적인 distance를 반환한다.
+# 또, get_sound는 자기 중심으로 다른 에이전트의 방향을 대략적으로 알게끔 하지만,
+# get_comm에서의 orient는 다른 에이전트로 부터 get_comm을 호출한 에이전트로의 방향을 안다는 점에서 orient의 의미에서 차이가 있다.
+# 남아있는 모든 에이전트에게 정보를 보내는 것이기 때문에 에이전트 개수만큼을 반환해서 각 에이전트가 i번째 인자를 가져가도록 하게끔 하자
+# 죽은 에이전트는 죽었으니 정지한 상태일까? 어쨋든 죽었든 살았든 반환개수는 에이전트 개수만큼 하는 게 좋을 것 같은데
+# 만약 카운트(get comm 할 수 있는 횟수)를 다 썼으면 아무것도 반환하지 않는다.
+
+def get_communication(locs, agents, agent_id):
+    dist = []
+    orient = []
+
+    if agents[agent_id].count > 1:  # return empty list
+        pass
+    else:
+        # position of the agent_i
+        pos_x, pos_y = locs[agent_id]
+
+        for i in range(locs):
+            if i != agent_id:
+
+                # get distance
+                p_x, p_y = locs[i]
+                dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
+
+                # get direction of the agent (get_comm을 호출한)
+                vision_ang_i = agents[i].angle
+                v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
+                vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
+
+                # Direct way to computing clockwise angle between 2 vectors
+                # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
+                dot = v_x * vi_x + v_y * vi_y
+                det = v_x * vi_y - v_y * vi_x
+
+                # The atan2() function returns a value in the range -pi to pi radians.
+                ang_i = math.atan2(det, dot)
+                orient.append(ang_i)
+            else:
+                # 자기 자신에 대한 dist, orient
+                dist.append(0)
+                orient.append(0)
+
+    return dist, orient

@@ -16,7 +16,7 @@ np.set_printoptions(threshold=sys.maxsize)
 
 class World:
     def __init__(self, agent_config: Tuple[int, int], agent_kwargs: Dict,
-                 map_size: Tuple[int, int], max_num_walls: int, borders: bool):
+                 map_size: Tuple[int, int], max_num_walls: int, borders: bool, sound_limit: int):
         """
         :param agent_config: Number of Hiders and Seekers
         :param agent_kwargs: Keyword arguments to create agents
@@ -47,6 +47,8 @@ class World:
         self.agents = [Agent(2, **agent_kwargs) if i < num_hiders else Agent(3, **agent_kwargs)
                        for i in range(num_seekers + num_hiders)]
         self.agent_loc = self.init_agent_loc()
+
+        self.sound_limit = sound_limit
         # TODO: zip agents and agent_loc
         print(f'Agents:\nHiders: {num_hiders}, Seekers: {num_seekers}')
 
@@ -134,9 +136,17 @@ class World:
     def get_agent_state(self, agent_id: int):
         vision = get_vision(self.map, self.agent_loc[agent_id], self.agents[agent_id].angle,
                             self.agents[agent_id].scope)
-        sound = get_sound()
-        comm = get_communication()
-        return vision, sound, comm
+        sound = get_sound(self.agent_loc, self.agents, agent_id, self.sound_limit)
+        comm = get_communication(self.agent_loc, self.agents, agent_id)
+
+        self.agents[agent_id].vision = vision
+        self.agents[agent_id].sound = sound
+
+        teammates = [a for i, a in enumerate(self.agents) if i != agent_id and a.agt_class == self.agents[agent_id].agt_class]
+        for j, agt in enumerate(teammates):
+            agt.comm = comm[j]
+
+        return None
 
     # World update function
     def update(self):

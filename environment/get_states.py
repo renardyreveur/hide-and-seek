@@ -83,7 +83,6 @@ def get_vision(env, position, orientation, scope):
 
 # TODO: 그 딱 경계에 있을 때 처리해주
 def get_sound(locs, agents, agent_id, sound_limit):
-
     # position of the agent_i
     pos_x, pos_y = locs[agent_id]
     vision_ang = agents[agent_id].angle
@@ -105,40 +104,37 @@ def get_sound(locs, agents, agent_id, sound_limit):
 
             # Direct way to computing clockwise angle between 2 vectors
             # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
-            dot = v_x*vi_x + v_y*vi_y
-            det = v_x*vi_y - v_y*vi_x
+            dot = v_x * vi_x + v_y * vi_y
+            det = v_x * vi_y - v_y * vi_x
 
             # The atan2() function returns a value in the range -pi to pi radians.
             ang_i = math.atan2(det, dot)
 
-            if -math.pi <= ang_i < -0.75*math.pi:
+            if -math.pi <= ang_i < -0.75 * math.pi:
                 orient.append(1)
-            elif -0.75*math.pi <= ang_i < -0.5*math.pi:
+            elif -0.75 * math.pi <= ang_i < -0.5 * math.pi:
                 orient.append(2)
-            elif -0.5*math.pi <= ang_i < -0.25*math.pi:
+            elif -0.5 * math.pi <= ang_i < -0.25 * math.pi:
                 orient.append(3)
-            elif -0.25*math.pi <= ang_i < 0:
+            elif -0.25 * math.pi <= ang_i < 0:
                 orient.append(4)
-            elif 0 <= ang_i < 0.25*math.pi:
+            elif 0 <= ang_i < 0.25 * math.pi:
                 orient.append(5)
-            elif 0.25*math.pi <= ang_i < 0.5*math.pi:
+            elif 0.25 * math.pi <= ang_i < 0.5 * math.pi:
                 orient.append(6)
-            elif 0.5*math.pi <= ang_i < 0.75*math.pi:
+            elif 0.5 * math.pi <= ang_i < 0.75 * math.pi:
                 orient.append(7)
             else:
                 orient.append(8)
 
     # all floats to 4 decimal places
-    streng = [round(1 / i, 4) for i in dist]
+    decibel = [round(1 / i, 4) for i in dist]
 
-    # get boolean list using sound_limit
-    lim = [[i > sound_limit for i in streng]]
+    assert len(decibel) == len(orient)
+    filtered = [(s, o) for s, o in list(zip(decibel, orient)) if s > sound_limit]
 
-    # filtering a list based on a list of booleans(lim)
-    strength = list(compress(streng, lim))
-    orientation = list(compress(orient, lim))
+    return filtered
 
-    return orientation, strength
 
 # get_sound에서의 dist는 sound limit 안에 해당하는 에이전트에 대해서만 strength 계산에 있어 사용되는 반면,
 # get_communication은 제한이 없고, 절대적인 distance를 반환한다.
@@ -159,28 +155,25 @@ def get_communication(locs, agents, agent_id):
         pos_x, pos_y = locs[agent_id]
 
         for i in range(locs):
-            if i != agent_id:
+            if i == agent_id or agents[i].agt_class != agents[agent_id].agt_class:
+                continue
 
-                # get distance
-                p_x, p_y = locs[i]
-                dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
+            # get distance
+            p_x, p_y = locs[i]
+            dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
 
-                # get direction of the agent (get_comm을 호출한)
-                vision_ang_i = agents[i].angle
-                v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
-                vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
+            # get direction of the agent (get_comm을 호출한)
+            vision_ang_i = agents[i].angle
+            v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
+            vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
 
-                # Direct way to computing clockwise angle between 2 vectors
-                # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
-                dot = v_x * vi_x + v_y * vi_y
-                det = v_x * vi_y - v_y * vi_x
+            # Direct way to computing clockwise angle between 2 vectors
+            # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
+            dot = v_x * vi_x + v_y * vi_y
+            det = v_x * vi_y - v_y * vi_x
 
-                # The atan2() function returns a value in the range -pi to pi radians.
-                ang_i = math.atan2(det, dot)
-                orient.append(ang_i)
-            else:
-                # 자기 자신에 대한 dist, orient
-                dist.append(0)
-                orient.append(0)
+            # The atan2() function returns a value in the range -pi to pi radians.
+            ang_i = math.atan2(det, dot)
+            orient.append(ang_i)
 
     return dist, orient

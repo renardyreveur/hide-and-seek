@@ -6,7 +6,8 @@ import cv2
 import numpy as np
 
 # test_agent is in the environment folder
-from agent import Agent
+from agent import Agent, actions
+
 # Get states
 from get_states import get_vision, get_sound, get_communication
 
@@ -49,6 +50,13 @@ class World:
         self.agent_loc = self.init_agent_loc()
 
         self.sound_limit = sound_limit
+
+        # List of agents that sent a comm signal
+        self.comm_list = []
+
+        # List of agents that sent a tag signal
+        self.tag_list = []
+
         # TODO: zip agents and agent_loc
         print(f'Agents:\nHiders: {num_hiders}, Seekers: {num_seekers}')
 
@@ -134,31 +142,65 @@ class World:
 
     # Get agent states
     def get_agent_state(self, agent_id: int):
-        vision = get_vision(self.map, self.agent_loc[agent_id], self.agents[agent_id].angle,
-                            self.agents[agent_id].scope)
+        """
+        This function will be called at every update state,
+        where all the agents get the knowledge of the changed state of the world due to their actions
+
+        3 Main agent states are updated: vision, sound, and communication
+
+        """
+        # Get array of what the agent sees in front
+        vision = get_vision(self.map, self.agent_loc[agent_id], self.agents[agent_id].angle, self.agents[agent_id].scope)
+
+        # Get estimated sound direction and strength
         sound = get_sound(self.agent_loc, self.agents, agent_id, self.sound_limit)
-        comm = get_communication(self.agent_loc, self.agents, agent_id)
 
         self.agents[agent_id].vision = vision
         self.agents[agent_id].sound = sound
 
-        teammates = [a for i, a in enumerate(self.agents) if i != agent_id and a.agt_class == self.agents[agent_id].agt_class]
-        for j, agt in enumerate(teammates):
-            agt.comm = comm[j]
+        # Get list of agents who sent a communication signal holding their relative bearing and distance
+        if agent_id in self.comm_list:
+            # Communication is only updated for teammates
+            comm = get_communication(self.agent_loc, self.agents, agent_id)
+            teammates = [a for i, a in enumerate(self.agents) if
+                         i != agent_id and a.agt_class == self.agents[agent_id].agt_class]
+            for j, agt in enumerate(teammates):
+                agt.comm = comm[j]
 
-        return None
+        if agent_id in self.tag_list:
+            # TODO: Find who this agent tagged, remove them from game if valid
+            pass
 
     # World update function
     def update(self):
-        actions = []
+        """
+        Order: Action -> Env State Change -> Agent State Change -> Reset
+        """
         for a_i, agt in enumerate(self.agents):
+            # Get new actions based on the updated agent states
+            action, action_param = agt.action()
+            dx, dy, tag, comm = getattr(actions, action)(**action_param)
+
+            # Update environment states based on action
+            # MOVE (Clamp position to the walls if negative)
+            x, y = self.agent_loc[a_i]
+            x += min(dx, self.width - (5 + agt.size) - x)
+            y += min(dy, self.height - (5 + agt.size) - y)
+            self.agent_loc[a_i] = (5 + agt.size if x < 5 + agt.size else x, 5 + agt.size if y < 5 + agt.size else y)
+
+            # TAG
+            if tag:
+                self.tag_list.append(a_i)
+
+            # COMM
+            if comm:
+                self.comm_list.append(a_i)
+
             # Update the dynamic variables of the agent
-            agt.vision, agt_sound, agt.comm = self.get_agent_state(a_i)
+            self.get_agent_state(a_i)
 
-            actions.append((a_i, agt.action()))
-
-        for act in actions:
-            agt_i, (action, action_param) = act
+        self.comm_list = []
+        self.tag_list = []
 
     # TODO: Clean this up
     def refresh_map(self):

@@ -1,7 +1,6 @@
 import math
 
 import numpy as np
-from itertools import compress
 
 
 def get_line(p1, p2, dist=None):

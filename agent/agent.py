@@ -19,8 +19,8 @@ class Agent:
 
         # Dynamic attributes
         self.vision = np.zeros((2, self.scope[1]))  # First row - vision, Second row - distance
-        self.sound = [(0, 0)]
-        self.comm = [(0, 0)]
+        self.sound = []  # Length = Number of agents around me
+        self.comm = []  # Length = Number of agents that sent a signal
 
         # State history
         self.history = []

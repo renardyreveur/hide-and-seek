@@ -7,7 +7,7 @@ from typing import Tuple
 
 class Agent:
     def __init__(self, agt_class: int, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
-                 visual_scope: Tuple[int, float], size: int):
+                 visual_scope: Tuple[int, float], size: int, count: int):
         # Fixed attributes
         self.max_speed = max_speed
         self.max_stamina = max_stamina
@@ -21,6 +21,7 @@ class Agent:
         self.vision = np.zeros((2, self.scope[1]))  # First row - vision, Second row - distance
         self.sound = []  # Length = Number of agents around me
         self.comm = []  # Length = Number of agents that sent a signal
+        self.count = count
 
         # State history
         self.history = []

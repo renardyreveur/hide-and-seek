@@ -25,6 +25,7 @@ def get_line(p1, p2, dist=None):
 
 
 def get_vision(env, position, orientation, scope):
+
     x_pos, y_pos = position
     angular_scope, dist_scope = scope
     angular_scope = angular_scope * math.pi / 180
@@ -74,6 +75,7 @@ def get_vision(env, position, orientation, scope):
 
     view = np.asarray(view)
     dist = np.asarray(dist)
+    print(f'xl: {xl}, yl: {yl}')
     # numba complains, probably due to type differences, just return as tuple for the moment
     # vision = np.stack([view, dist], axis=0)
     # TODO: match return to agent vision attribute
@@ -150,10 +152,11 @@ def get_communication(locs, agents, agent_id):
     if agents[agent_id].count > 1:  # return empty list
         pass
     else:
+        agents[agent_id].count += 1
         # position of the agent_i
         pos_x, pos_y = locs[agent_id]
 
-        for i in range(locs):
+        for i in range(len(locs)):
             if i == agent_id or agents[i].agt_class != agents[agent_id].agt_class:
                 continue
 

@@ -30,7 +30,7 @@ def move(agent, ang_accel=3, accel=1):
     delta_x = int(agent.speed * math.cos(agent.angle))
     delta_y = int(agent.speed * math.sin(agent.angle))
 
-    agent.observe_env()
+    # agent.observe_env()
     print(f'delta_x: {delta_x}, delta_y: {delta_y}')
     return delta_x, delta_y, tag, communicate
 

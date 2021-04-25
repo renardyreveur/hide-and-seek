@@ -1,9 +1,10 @@
 import cv2
 
-from environment.env import World
+from environment import World
 
 # ---- TEST Parameters ----
-MAX_TIMESTEP = 5
+MAX_TIMESTEP = 300
+SAVE_VID = False
 
 # ---- World Gen. Parameters ----
 agent_cfg = (2, 2)                # num. hiders, num. seekers
@@ -21,45 +22,47 @@ max_num_walls = 20                # maximum number of walls
 borders = True                    # border settings of the map
 sound_lim = 90                    # all sounds above 90 dB are damaging the inner ear
 
-# Generate our test WORLD!!!
-show_world = None
-new_world = World(agent_cfg, agent_kwargs,
-                  map_size, max_num_walls, borders, sound_lim)
 
-world = new_world.map
-new_world.init_drawing()
+# Generate our test WORLD!!!
+world = World(agent_cfg, agent_kwargs, map_size, max_num_walls, borders, sound_lim)
+
+# To save a video
+if SAVE_VID:
+    v_writer = cv2.VideoWriter("test.mp4", cv2.VideoWriter_fourcc(*'mp4v'), 20, world.map.shape[:2][::-1])
 
 # Iterate over time!
 for t in range(MAX_TIMESTEP):
-    # world = new_world.map
-    print(f't: {t}')
-    for i, agt in enumerate(new_world.agents):
-        new_world.update()
+    print(f'\nTIME: {t}')
 
-        x, y = new_world.agent_loc[i]
-        world[y, x] = agt.agt_class
+    # Initialise map canvas to draw
+    show_world = world.init_drawing()
+
+    # World update!
+    world.update()
+
+    # Get update results per agent
+    for i, agt in enumerate(world.agents):
+        # Get agent location to draw
+        x, y = world.agent_loc[i]
 
         # Draw Agent
-        if agt.agt_class == 2:
-            color = (200, 150, 0)
-        else:
-            color = (0, 200, 200)
+        color = (200, 150, 0) if agt.agt_class == 2 else (0, 200, 200)
+        cv2.circle(show_world, (x, y), agt.size, color, 2)
 
-        cv2.circle(show_world, (x, y), agt.size, color, -1)
-
-        # Get agent vision
-        print(f'vision: {agt.vision}')
-        (pa, pb), vis = agt.vision
-
-        # Draw vision
-        cv2.imshow('vision', cv2.resize((vis[0]*255).astype('uint8'), (10, vis[0].shape[0] * 10),
-                                        interpolation=cv2.INTER_NEAREST))
+        # Draw Agent Vision
+        (pa, pb), _ = agt.vision
         cv2.line(show_world, tuple(int(n) for n in pa), tuple(int(n) for n in pb), (200, 0, 200), 2)
 
+    if SAVE_VID:
+        v_writer.write(show_world)
 
     cv2.imshow("WORLD!", show_world)
-    cv2.waitKey(0)
-
-
+    cv2.imshow("map", world.map)
+    k = cv2.waitKey(0)
+    if k == 27:
+        break
 
 cv2.destroyAllWindows()
+
+if SAVE_VID:
+    v_writer.release()

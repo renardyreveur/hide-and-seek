@@ -24,18 +24,18 @@ def move(agent, ang_accel=3, accel=1):
     agent.angle += delta_angle
     agent.angle %= (2 * math.pi)
     agent.speed += min(delta_speed, agent.max_speed - agent.speed)
-    print(f"REAL speed: {agent.speed}, REAL angle: {agent.angle}")
+    # print(f"REAL speed: {agent.speed}, REAL angle: {agent.angle}")
 
     # Move the agent accordingly
     delta_x = int(agent.speed * math.cos(agent.angle))
     delta_y = int(agent.speed * math.sin(agent.angle))
 
     # agent.observe_env()
-    print(f'delta_x: {delta_x}, delta_y: {delta_y}')
+    # print(f'delta_x: {delta_x}, delta_y: {delta_y}')
     return delta_x, delta_y, tag, communicate
 
 
-def tag():
+def tag(agent):
     """
     For hiders: Tag the checkpoint
     For seekers: Tag the hiders
@@ -43,7 +43,7 @@ def tag():
     return 0, 0, True, False
 
 
-def communicate():
+def communicate(agent):
     """
     Send a 'near-by' signal to the same team agents
     """

@@ -18,7 +18,7 @@ class Agent:
         assert self.agt_class in [2, 3]
 
         # Dynamic attributes
-        self.vision = np.zeros((2, self.scope[1]))  # First row - vision, Second row - distance
+        self.vision = ((0, 0), np.zeros((2, self.scope[1])))  # First row - vision, Second row - distance
         self.sound = []  # Length = Number of agents around me
         self.comm = []  # Length = Number of agents that sent a signal
         self.count = count
@@ -42,7 +42,7 @@ class Agent:
         """
         # --- Policy ---
         # If wall in vision, rotate
-        if 1 in self.vision[0]:
+        if 1 in self.vision[1][0]:
             action = 1
             action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
                             "accel": -10}
@@ -54,7 +54,7 @@ class Agent:
                             "accel": 0}
 
         # If hider in front, tag
-        elif self.agt_class == 3 and 2 in self.vision[0] and self.vision[1][list(self.vision[0]).index(2)] < 60:
+        elif self.agt_class == 3 and 2 in self.vision[1][0] and self.vision[1][1][list(self.vision[1][0]).index(2)] < 60:
             action = 2
             action_param = {}
 

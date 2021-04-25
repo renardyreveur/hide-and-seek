@@ -3,6 +3,7 @@ import math
 import numpy as np
 
 
+# Get coordinates that form a line between two lines
 def get_line(p1, p2, dist=None):
     x1, y1 = p1
     x2, y2 = p2
@@ -25,7 +26,6 @@ def get_line(p1, p2, dist=None):
 
 
 def get_vision(env, position, orientation, scope):
-
     x_pos, y_pos = position
     angular_scope, dist_scope = scope
     angular_scope = angular_scope * math.pi / 180
@@ -75,7 +75,7 @@ def get_vision(env, position, orientation, scope):
 
     view = np.asarray(view)
     dist = np.asarray(dist)
-    print(f'xl: {xl}, yl: {yl}')
+    # print(f'xl: {xl}, yl: {yl}')
     # numba complains, probably due to type differences, just return as tuple for the moment
     # vision = np.stack([view, dist], axis=0)
     # TODO: match return to agent vision attribute

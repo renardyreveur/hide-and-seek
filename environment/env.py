@@ -4,13 +4,12 @@ from typing import Tuple, Dict
 
 import cv2
 import numpy as np
-import random
 
 # test_agent is in the environment folder
 from agent import Agent, actions
 
 # Get states
-from environment.get_states import get_vision, get_sound, get_communication
+from .get_states import get_vision, get_sound, get_communication
 
 # If you get a truncated representation, but want the full array, try
 np.set_printoptions(threshold=sys.maxsize)
@@ -32,7 +31,7 @@ class World:
         self.num_walls = np.random.randint(max_num_walls // 2, max_num_walls)
 
         # Create empty map (+ borders if requested)
-        self.map = np.zeros((self.width, self.height))
+        self.map = np.zeros((self.height, self.width))
         self.borders = borders
         if borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
@@ -60,7 +59,7 @@ class World:
         self.tag_list = []
 
         # TODO: zip agents and agent_loc
-        print(f'Agents:\nHiders: {num_hiders}, Seekers: {num_seekers}')
+        print(f'\nAgents:\nHiders: {num_hiders}, Seekers: {num_seekers}')
 
     # Make walls
     def make_walls(self):
@@ -101,7 +100,7 @@ class World:
 
             # If the pixel is occupied by the wall, let's put 1 there
             for coord in zip(xs, ys):
-                self.map[coord] = 1
+                self.map[ys, xs] = 1
                 wall_loc.append(coord)
 
         return wall_loc
@@ -113,76 +112,45 @@ class World:
         this function locates agents once at the beginning!
         Wall is made before the agents, so the agent cannot share the location with the walls
         """
+        print("\nInitialising Agent Locations...")
+        print("If this takes too long, try generating a different map!")
+
         # Resulting list that will hold the agent positions
         loc = []
+        # Select a starting position for each agent
+        for agt in self.agents:
+            # Get the agent's class, it's starting pos. depends on it's class
+            a_class = agt.agt_class
 
-        # 벽의 위치는 not available for agents
-        n_avail_posx = [w[0] for w in self.wall_loc]
-        n_avail_posy = [w[1] for w in self.wall_loc]
+            # Unavailable positions (wall_loc is a list of  tuples)
+            comp = self.wall_loc + [loc[-1]] if len(loc) > 0 else self.wall_loc
 
-        # 랜덤하게 벽 피하면서, 다른 에이전트도 피하게끔 해야한다.
-        while True:
-            print("While... ")
-            for agt in self.agents:
-                # 벽의 두께를 고려해서 벽 안에 에이전트가 놓일 수는 없으니가!
-                n_pxs = [px for p in n_avail_posx for px in range(p - 5, p + 5)]  # set(n_avail_posx)
-                n_pys = [py for p in n_avail_posy for py in range(p - 5, p + 5)]
-
-                a_class = agt.agt_class
-
-                # 하이더는 bottom right, 인데 벽 근처는 좀 피해서 초이스하게끔
-                pxs_h = [px for px in range(int(self.width / 2)) if px not in n_pxs]  # set(n_pxs)
-                pys_h = [py for py in range(int(self.height / 2)) if py not in n_pys]
-
-                pxs_s = [px for px in range(int(self.width / 2), self.width) if px not in n_pxs]
-                pys_s = [py for py in range(int(self.height / 2), self.height) if py not in n_pys]
-
-                # TODO: position list(pxs_h, pys_h 외 2개) can be empty
-                # print(f'len(pxs_h): {len(pxs_h)}, len(pys_h): {len(pys_h)}, len(pxs_s): {len(pxs_s)}, len(pys_s): {len(pys_s)}')
-                if 0 in [len(pxs_h), len(pys_h), len(pxs_s), len(pys_s)]:
-                    break
-
+            while True:
                 if a_class == 2:
                     # Hiders start at the top left part of the map
-                    a_x = random.choice(pxs_h)
-                    a_y = random.choice(pys_h)
-                    n_pxs.append(a_x)
-                    n_pys.append(a_y)
+                    a_x = np.random.randint(low=0, high=int(self.width / 2), size=1)[0]
+                    a_y = np.random.randint(low=0, high=int(self.height / 2), size=1)[0]
                 else:
                     # Seekers start at the bottom right part of the map
-                    a_x = random.choice(pxs_s)
-                    a_y = random.choice(pys_s)
-                    n_pxs.append(a_x)
-                    n_pys.append(a_y)
+                    a_x = np.random.randint(low=math.floor(self.width / 2), high=self.width, size=1)[0]
+                    a_y = np.random.randint(low=math.floor(self.height / 2), high=self.height, size=1)[0]
 
-                # comp = self.wall_loc + (loc[-1] if len(loc) > 0 else loc)
-                # good = 0
-                #
-                # a_x, a_y = 0, 0
-                # random.choice(r)
-                # kk[:int(len(kk)/2)]
-                # while good != len(comp):
-                #     if a_class == 2:
-                #         # Hiders start at the top left part of the map
-                #         a_x = random.choice(avail_posx[:int(len(avail_posx) / 2)])
-                #         a_y = random.choice(avail_posx[:int(len(avail_posy) / 2)])
-                #         # a_x = np.random.randint(low=0, high=int(self.width / 2), size=1)
-                #         # a_y = np.random.randint(low=0, high=int(self.height / 2), size=1)
-                #     else:
-                #         # Seekers start at the bottom right part of the map
-                #         a_x = np.random.randint(low=math.floor(self.width / 2), high=self.width, size=1)
-                #         a_y = np.random.randint(low=math.floor(self.height / 2), high=self.height, size=1)
-                #
-                #     for (ox, oy) in comp:
-                #         if abs(ox - a_x) > agt.size * 2 and abs(oy - a_y) > agt.size * 2:
-                #             good += 1
+                # Check if randomly selected position is viable (not walls, or each other, etc)
+                complete = 0
+                for (ox, oy) in comp:
+                    if abs(ox - a_x) < agt.size or abs(oy - a_y) < agt.size:
+                        # print((a_x, a_y), (ox, oy), (abs(ox-a_x), abs(oy-a_y)), agt.size)
+                        break
+                    complete += 1
 
-                # if (a_x, a_y) not in self.wall_loc:
-                self.map[(a_x, a_y)] = a_class
-                loc.append((a_x, a_y))
-            break
+                # If entire for loop ran -> all good!
+                if complete == len(comp):
+                    break
 
-        # loc = [tuple(np.array(i).reshape(-1)) for i in loc]
+            # Update map with initial location
+            self.map[(a_y, a_x)] = a_class
+            loc.append((a_x, a_y))
+
         return loc
 
     # Get agent states
@@ -195,8 +163,7 @@ class World:
 
         """
         # Get array of what the agent sees in front
-        vision = get_vision(self.map, self.agent_loc[agent_id], self.agents[agent_id].angle,
-                            self.agents[agent_id].scope)
+        vision = get_vision(self.map, self.agent_loc[agent_id], self.agents[agent_id].angle, self.agents[agent_id].scope)
 
         # Get estimated sound direction and strength
         sound = get_sound(self.agent_loc, self.agents, agent_id, self.sound_limit)
@@ -222,25 +189,31 @@ class World:
         """
         Order: Action -> Env State Change -> Agent State Change -> Reset
         """
+        # Refresh map
+        self.refresh_map()
+
+        # Update agents
         for a_i, agt in enumerate(self.agents):
             # Get new actions based on the updated agent states
             action, action_param = agt.action()
-            # getattr string 써야한대서
-            acts = ["move", "tag", "communicate"]
-            print(f'action_param: {action_param}')
-            if not acts[action-1] == "move":
-                dx, dy, tag, comm = getattr(actions, acts[action - 1])(**action_param)
-            else:
-                dx, dy, tag, comm = getattr(actions, acts[action - 1])(agt, **action_param)
+            acts = {
+                1: "move",
+                2: "tag",
+                3: "communicate"
+            }
+            print(f"AgentID: {a_i, agt.agt_class}, Action: {acts[action].upper()}, Params: {action_param}")
 
+            # Action results
+            dx, dy, tag, comm = getattr(actions, acts[action])(agt, **action_param)
 
             # Update environment states based on action
             # MOVE (Clamp position to the walls if negative)
-            print(f'self.agent_loc in update: {self.agent_loc}')
             x, y = self.agent_loc[a_i]
             x += min(dx, self.width - (5 + agt.size) - x)
             y += min(dy, self.height - (5 + agt.size) - y)
             self.agent_loc[a_i] = (5 + agt.size if x < 5 + agt.size else x, 5 + agt.size if y < 5 + agt.size else y)
+            # Update map with new agent locations
+            self.map[self.agent_loc[a_i][::-1]] = agt.agt_class
 
             # TAG
             if tag:
@@ -259,39 +232,14 @@ class World:
     # TODO: Clean this up
     def refresh_map(self):
         # Empty map 생성하기 (+ borders if requested)
-        self.map = np.zeros((self.width - 10, self.height - 10))
+        self.map = np.zeros((self.height - 10, self.width - 10))
         if self.borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
 
         for pt in self.wall_loc:
-            self.map[pt] = 1
+            self.map[pt[::-1]] = 1
 
     def init_drawing(self):
-        global show_world, new_world, world
-        self.refresh_map()
-        new_world = self.map
-        show_world = cv2.cvtColor((new_world * 255).astype('uint8'), cv2.COLOR_GRAY2BGR)
-        show_world[np.where((show_world == (255, 255, 255)).all(axis=2))] = (255, 0, 0)
-
-
-if __name__ == "__main__":
-    show_world = None
-    # ------Agent parameters------
-    max_speed = 30
-    max_stamina = 10
-
-    acceleration_limits = (15, 90 * math.pi / 180)
-    scope = (140, 15)
-    size = 5
-
-    envn = World(50, 50, 20, True, 1, 1, max_speed, max_stamina, acceleration_limits, scope, size)
-    world = envn.map
-
-    envn.init_drawing()
-    for _ in range(10):
-        envn.agent_state(show_world)
-
-        cv2.imshow("world", show_world)
-        k = cv2.waitKey(0)
-        if k == 5:
-            break
+        show_world = cv2.cvtColor(self.map.astype('uint8'), cv2.COLOR_GRAY2BGR)
+        show_world[np.where((show_world == (1, 1, 1)).all(axis=2))] = (255, 0, 0)
+        return show_world

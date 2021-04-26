@@ -41,20 +41,19 @@ class Agent:
         :return: action choice, action parameters
         """
         # --- Policy ---
+        vision_array = self.vision[1]
         # If wall in vision, rotate
-        if 1 in self.vision[1][0]:
+        if 1 in vision_array[0]:
             action = 1
-            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
-                            "accel": -10}
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": -10}
 
         # If stationary for 3 time steps rotate
         elif len(set(self.history)) == 1:
             action = 1
-            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180),
-                            "accel": 0}
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": 0}
 
         # If hider in front, tag
-        elif self.agt_class == 3 and 2 in self.vision[1][0] and self.vision[1][1][list(self.vision[1][0]).index(2)] < 60:
+        elif self.agt_class == 3 and 2 in vision_array[0] and vision_array[1][list(vision_array[0]).index(2)] < 60:
             action = 2
             action_param = {}
 

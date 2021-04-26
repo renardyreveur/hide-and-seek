@@ -1,17 +1,16 @@
-from itertools import product
-import math
+import random
 import sys
-import time
+from itertools import product
 from typing import Tuple, Dict
 
 import cv2
-import numpy as np
-import random
+
 # test_agent is in the environment folder
 from agent import Agent, actions
 # Get states
 from .get_states import get_vision, get_sound, get_communication
 from .interesting_walls import *
+
 # If you get a truncated representation, but want the full array, try
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -111,7 +110,6 @@ class World:
 
         return wall_loc
 
-
     # Make list that will hold agent locations
     def init_agent_loc(self):
         """
@@ -120,36 +118,26 @@ class World:
         Wall is made before the agents, so the agent cannot share the location with the walls
         """
         print("\nInitialising Agent Locations...")
-        # print("If this takes too long, try generating a different map!")
 
         # Resulting list that will hold the agent positions
         loc = []
 
+        # Get Cartesian product of the map to get all the possible coordinates
         grids = list(product(range(self.width), range(self.height)))
-        print(f'len(grids): {len(grids)}')
-        print(f'len(self.wall_loc): {len(self.wall_loc)}')
-
-        # TODO: This loop takes too much time
-        start = time.process_time()
-        grids = [grid for grid in grids if grid not in self.wall_loc]
-        print(f'time: {time.process_time() - start}')
-
-        # Width: 684, Height: 906
-        # Num Walls: 19
-        # Time:
-        print(f'len(grids): {len(grids)}')
+        # Remove wall locations from the possible coordinates
+        grids = list(set(grids) - set(self.wall_loc))
 
         # lower-left possible coords for hiders
         pos_grids_hiders = [(x, y) for (x, y) in grids if x < self.width/2 and y < self.height/2]
-
         # upper-right possible coords for seekers
         pos_grids_seekers = [(x, y) for (x, y) in grids if x > self.width/2 and y > self.height/2]
 
+        # If you can't choose enough coordinates for all the agents (unlikely, but possible)
         if len(pos_grids_seekers) < self.num_seekers or len(pos_grids_hiders) < self.num_hiders:
             print("Invalid map.. \nTry generating a new map!")
+            raise RuntimeError
 
-        # TODO: should consider the size of agents and walls
-
+        # TODO: The walls can be within the agent due to the agent's size, fix?
         # Select a starting position for each agent
         for agt in self.agents:
             # Get the agent's class, it's starting pos. depends on it's class
@@ -224,9 +212,25 @@ class World:
             # Update environment states based on action
             # MOVE (Clamp position to the walls if negative)
             x, y = self.agent_loc[a_i]
+            # Agent cannot cross walls
+            for w in self.wall_loc:
+                if dx >= 0 and dy >= 0:
+                    if x <= w[0] <= x + dx and y <= w[1] <= y + dy:
+                        dx, dy = 0, 0
+                elif dx >= 0 >= dy:
+                    if x <= w[0] <= x + dx and y >= w[1] >= y + dy:
+                        dx, dy = 0, 0
+                elif dx <= 0 <= dy:
+                    if x >= w[0] >= x + dx and y <= w[1] <= y + dy:
+                        dx, dy = 0, 0
+                elif dx <= 0 and dy <= 0:
+                    if x >= w[0] >= x + dx and y >= w[1] >= y + dy:
+                        dx, dy = 0, 0
+
             x += min(dx, self.width - (5 + agt.size) - x)
             y += min(dy, self.height - (5 + agt.size) - y)
             self.agent_loc[a_i] = (5 + agt.size if x < 5 + agt.size else x, 5 + agt.size if y < 5 + agt.size else y)
+
             # Update map with new agent locations
             self.map[self.agent_loc[a_i][::-1]] = agt.agt_class
 
@@ -244,13 +248,10 @@ class World:
         self.comm_list = []
         self.tag_list = []
 
-    # TODO: Clean this up
     def refresh_map(self):
-        # Empty map 생성하기 (+ borders if requested)
         self.map = np.zeros((self.height - 10, self.width - 10))
         if self.borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
-
         for pt in self.wall_loc:
             self.map[pt[::-1]] = 1
 

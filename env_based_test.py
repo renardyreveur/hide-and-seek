@@ -50,7 +50,7 @@ for t in range(MAX_TIMESTEP):
         cv2.circle(show_world, (x, y), agt.size, color, 2)
 
         # Draw Agent Vision
-        (pa, pb), _ = agt.vision
+        (pa, pb), _, _ = agt.vision
         cv2.line(show_world, tuple(int(n) for n in pa), tuple(int(n) for n in pb), (200, 0, 200), 2)
 
     if SAVE_VID:

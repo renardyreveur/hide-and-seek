@@ -32,7 +32,7 @@ def move(agent, ang_accel=3, accel=1):
 
     # agent.observe_env()
     # print(f'delta_x: {delta_x}, delta_y: {delta_y}')
-    return delta_x, delta_y, tag, communicate
+    return delta_x, delta_y, False, False
 
 
 def tag(agent):

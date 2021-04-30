@@ -1,3 +1,4 @@
+import math
 import random
 import sys
 from itertools import product
@@ -165,6 +166,23 @@ class World:
         3 Main agent states are updated: vision, sound, and communication
 
         """
+        # Tag event
+        if agent_id in self.tag_list:
+            tag_vis = self.agents[agent_id].vision
+            if 2 in tag_vis[1][0]:
+                tag_vis_idx = list(tag_vis[1][0]).index(2)
+                tag_dist_idx = int(tag_vis[1][1][tag_vis_idx])
+                coord = tag_vis[2][tag_vis_idx][tag_dist_idx]
+                # TODO : TAG condition is still a bit iffy
+                for i, a_loc in enumerate(self.agent_loc):
+                    x1, y1 = coord
+                    x2, y2 = a_loc
+                    if int(math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)) < self.agents[agent_id].size*2 and self.agents[i].agt_class == 2:
+                        self.agents.pop(i)
+                        self.agent_loc.pop(i)
+                        return 2
+                        # TODO : Reward seeker
+
         # Get array of what the agent sees in front
         vision = get_vision(self.map, self.agent_loc[agent_id], self.agents[agent_id].angle, self.agents[agent_id].scope)
 
@@ -182,10 +200,6 @@ class World:
                          i != agent_id and a.agt_class == self.agents[agent_id].agt_class]
             for j, agt in enumerate(teammates):
                 agt.comm = comm[j]
-
-        if agent_id in self.tag_list:
-            # TODO: Find who this agent tagged, remove them from game if valid
-            pass
 
     # World update function
     def update(self):

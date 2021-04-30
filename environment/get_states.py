@@ -44,7 +44,7 @@ def get_vision(env, position, orientation, scope):
     # Arrays to hold vision and distance information
     view = []
     dist = []
-
+    sight_c = []
     # Get visual scope line
     vis_line = get_line((xl, yl), (xr, yr), dist=int(2 * math.sqrt(dist_scope ** 2 + max_dist ** 2)))
 
@@ -54,6 +54,8 @@ def get_vision(env, position, orientation, scope):
         # Sight limited by the dist scope
         sight_line = get_line((x_pos, y_pos), vis_pt)[:dist_scope]
         sight_value = [env[int(ye), int(xe)] if env.shape[1] > int(xe) > 0 and env.shape[0] > int(ye) > 0 else 1
+                       for xe, ye in sight_line]
+        sight_coord = [(int(xe), int(ye)) if env.shape[1] > int(xe) > 0 and env.shape[0] > int(ye) > 0 else 1
                        for xe, ye in sight_line]
 
         # Test for object in sight
@@ -69,17 +71,18 @@ def get_vision(env, position, orientation, scope):
         if whs_query[0] == np.inf and whs_query[1] == np.inf and whs_query[2] == np.inf:
             dist.append(np.inf)
             view.append(0)
+            sight_c.append(sight_coord)
         else:
             dist.append(min(whs_query))
             view.append(whs_query.index(min(whs_query)) + 1)
-
+            sight_c.append(sight_coord)
     view = np.asarray(view)
     dist = np.asarray(dist)
     # print(f'xl: {xl}, yl: {yl}')
     # numba complains, probably due to type differences, just return as tuple for the moment
     # vision = np.stack([view, dist], axis=0)
     # TODO: match return to agent vision attribute
-    return ((xl, yl), (xr, yr)), (view, dist)
+    return ((xl, yl), (xr, yr)), (view, dist), sight_c
 
 
 # TODO: 그 딱 경계에 있을 때 처리해주

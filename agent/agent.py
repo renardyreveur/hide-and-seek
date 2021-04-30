@@ -27,7 +27,7 @@ class Agent:
         self.history = []
 
         # --- Movement State ---
-        self.angle = 0
+        self.angle = random.randint(0, 360) * math.pi / 180
         self.speed = 0
         self.stamina = max_stamina
 

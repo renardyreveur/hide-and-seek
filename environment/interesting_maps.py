@@ -1,8 +1,9 @@
+import operator
 import random
+
 import cv2
 import numpy as np
-import operator
-from scipy.spatial import Voronoi, voronoi_plot_2d
+from scipy.spatial import Voronoi
 
 # ---- RANDOM WALK PARAMS ----
 SIZE = 700
@@ -12,8 +13,8 @@ NUM_GENERATING = 7
 
 world = np.ones((SIZE, SIZE))
 
-def get_random_walk_map(world, num_generating, num_walk, thickness):
 
+def get_random_walk_map(world, num_generating, num_walk, thickness):
     wall_loc = []
     dir_choice = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # RIGHT, LEFT, UP, DOWN
 
@@ -53,18 +54,17 @@ def get_random_walk_map(world, num_generating, num_walk, thickness):
 
     return wall_loc
 
-walls = get_random_walk_map(world, NUM_GENERATING, NUM_WALK, THICKNESS)
+
+# walls = get_random_walk_map(world, NUM_GENERATING, NUM_WALK, THICKNESS)
 # print(f'len(wall_loc): {len(walls)}')
 
 
 # ---- Map using Voronoi diagram ----
-SIZE = 500
+SIZE = 700
 world = np.zeros((SIZE, SIZE, 3), np.uint8)
 NUM_ROOMS = 10
-room_pos = [(np.random.randint(1, SIZE), np.random.randint(1, SIZE)) for _ in range(NUM_ROOMS)]
-print(f'room_pos: {room_pos}')
 
-
+# https://gist.github.com/pv/8036995
 def voronoi_finite_polygons_2d(vor, radius=None):
     """
     Reconstruct infinite voronoi regions in a 2D diagram to finite
@@ -149,28 +149,61 @@ def voronoi_finite_polygons_2d(vor, radius=None):
     return new_regions, np.asarray(new_vertices)
 
 
-# compute Voronoi tesselation
-vor = Voronoi(room_pos)
+def get_voronoi_map(num_rooms, world):
 
-# plot
-regions, vertices = voronoi_finite_polygons_2d(vor)
+    w, h = world.shape[0], world.shape[1]
+    room_pos = [(np.random.randint(1, w), np.random.randint(1, h)) for _ in range(num_rooms)]
+    print(f'room_pos: {room_pos}')
 
-# colorize
-for region in regions:
-    polygon = vertices[region]
-    poly = []
-    for a in polygon:
-        poly.append([sorted((int(b), 0, SIZE))[1] for b in a])
-        x_, y_ = [sorted((int(b), 0, SIZE))[1] for b in a]
-        world[y_, x_] = 1
+    # compute Voronoi tesselation
+    vor = Voronoi(room_pos)
 
-    print(f'polygon: \n{poly}')
+    # plot
+    regions, vertices = voronoi_finite_polygons_2d(vor)
+    # 번갈아가면서 하려면
+    # room_or_block = ((255, 255, 255), (0, 0, 0))*10
+    # r = 0
+    # real map 사용하려면 아래에 real map 부분 켜줘야함
+    for region in regions:
+        polygon = vertices[region]
+        areas = []
+        poly = []
+        for a in polygon:
+            x_, y_ = [sorted((int(b), 0, SIZE - 1))[1] for b in a]
+            poly.append((x_, y_))
 
-    # world = cv2.fillPoly(world, np.array(poly, np.int32), (255, 255, 255))
+            world[y_, x_] = 1
+            # cv2.circle(world, (y_, x_), 5, (255, 255, 255), -1)
+
+        if len(poly) > 2:
+            areas.append(np.array(poly))
+
+        # print(f'areas: {areas}')
+
+        # If you wanna colorize,
+        color = np.random.choice(range(256), size=3)
+        color = (int(color[0]), int(color[1]), int(color[2]))
+        cv2.fillPoly(world, areas, tuple(color))
+
+        # Real map
+        # room_or_block = ((255, 255, 255), (0, 0, 0))
+        # color = random.choices(room_or_block, weights=[0.5, 0.5])
+        # print(f'color: {color}')
+        # cv2.fillPoly(world, areas, color[0])
+
+        # 번갈아 가면서 선택하면 조금 더 듬성등성? 될 줄 알았는데
+        # color = room_or_block[r]
+        # print(f'color; {color}')
+        # cv2.fillPoly(world, areas, color)
+        # r += 1
+
     cv2.imshow('test', world)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+    return None
+
+get_voronoi_map(NUM_ROOMS, world)
 
 # ---- THE SIMPLEST MAP WITH WALLS ----
 def make_walls(num_walls, map_width, map_height, map):

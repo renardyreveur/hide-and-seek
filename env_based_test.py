@@ -7,6 +7,8 @@ MAX_TIMESTEP = 300
 SAVE_VID = False
 
 # ---- World Gen. Parameters ----
+map_type = "voronoi"
+
 agent_cfg = (2, 2)                # num. hiders, num. seekers
 agent_kwargs = {
     "max_speed": 10,              # max speed of an agent
@@ -17,14 +19,14 @@ agent_kwargs = {
     "count": 0
 }
 
-map_size = (1000, 1000)           # maximum map size
-max_num_walls = 20                # maximum number of walls
+map_size = (600, 600)             # maximum map size
+max_num_walls = 100               # maximum number of walls - large number required for the voronoi map
 borders = True                    # border settings of the map
 sound_lim = 90                    # all sounds above 90 dB are damaging the inner ear
 
 
 # Generate our test WORLD!!!
-world = World(agent_cfg, agent_kwargs, map_size, max_num_walls, borders, sound_lim)
+world = World(map_type, agent_cfg, agent_kwargs, map_size, max_num_walls, borders, sound_lim)
 
 # To save a video
 if SAVE_VID:

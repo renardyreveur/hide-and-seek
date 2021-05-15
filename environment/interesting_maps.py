@@ -5,16 +5,11 @@ import cv2
 import numpy as np
 from scipy.spatial import Voronoi
 
-# ---- RANDOM WALK PARAMS ----
-SIZE = 700
-NUM_WALK = 1000  # SIZE*2
-THICKNESS = 14  # SIZE/50
-NUM_GENERATING = 7
 
-world = np.ones((SIZE, SIZE))
+def random_walk(world, num_generating):
+    num_walk = max(max(world.shape) * 2, 1000)
+    thickness = int(max(world.shape) / 50)
 
-
-def get_random_walk_map(world, num_generating, num_walk, thickness):
     wall_loc = []
     dir_choice = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # RIGHT, LEFT, UP, DOWN
 
@@ -31,13 +26,13 @@ def get_random_walk_map(world, num_generating, num_walk, thickness):
             dir = random.choice(dir_choice)
             pos_x, pos_y = tuple(map(operator.add, pos, dir))
 
-            pos_x = sorted((0, SIZE, pos_x))[1]
-            pos_y = sorted((0, SIZE, pos_y))[1]
+            pos_x = sorted((0, w, pos_x))[1]
+            pos_y = sorted((0, h, pos_y))[1]
 
             space_x = list(range(pos_x - thickness, pos_x + thickness + 1))
-            space_x = [max(min(x, SIZE - 1), 0) for x in space_x]
+            space_x = [max(min(x, w - 1), 0) for x in space_x]
             space_y = list(range(pos_y - thickness, pos_y + thickness + 1))
-            space_y = [max(min(y, SIZE - 1), 0) for y in space_y]
+            space_y = [max(min(y, h - 1), 0) for y in space_y]
 
             space = []
             for x in space_x:
@@ -54,15 +49,18 @@ def get_random_walk_map(world, num_generating, num_walk, thickness):
 
     return wall_loc
 
+# ---- TEST FOR A RANDOM WALK MAP ----
+# SIZE = 700
+# NUM_WALK = 1000  # SIZE*2
+# THICKNESS = 14  # SIZE/50
+# NUM_GENERATING = 7
 
-# walls = get_random_walk_map(world, NUM_GENERATING, NUM_WALK, THICKNESS)
+# world = np.ones((SIZE, SIZE))
+# walls = random_walk(world, NUM_GENERATING)
 # print(f'len(wall_loc): {len(walls)}')
 
 
 # ---- Map using Voronoi diagram ----
-SIZE = 700
-world = np.zeros((SIZE, SIZE, 3), np.uint8)
-NUM_ROOMS = 10
 
 # https://gist.github.com/pv/8036995
 def voronoi_finite_polygons_2d(vor, radius=None):
@@ -149,9 +147,9 @@ def voronoi_finite_polygons_2d(vor, radius=None):
     return new_regions, np.asarray(new_vertices)
 
 
-def get_voronoi_map(num_rooms, world):
-
+def voronoi(world, num_rooms):
     w, h = world.shape[0], world.shape[1]
+    print(f'world.shape: {world.shape}')
     room_pos = [(np.random.randint(1, w), np.random.randint(1, h)) for _ in range(num_rooms)]
     print(f'room_pos: {room_pos}')
 
@@ -169,10 +167,11 @@ def get_voronoi_map(num_rooms, world):
         areas = []
         poly = []
         for a in polygon:
-            x_, y_ = [sorted((int(b), 0, SIZE - 1))[1] for b in a]
+            x_ = sorted((int(a[0]), 0, w - 1))[1]
+            y_ = sorted((int(a[1]), 0, h - 1))[1]
             poly.append((x_, y_))
 
-            world[y_, x_] = 1
+            world[x_, y_] = 1
             # cv2.circle(world, (y_, x_), 5, (255, 255, 255), -1)
 
         if len(poly) > 2:
@@ -181,15 +180,15 @@ def get_voronoi_map(num_rooms, world):
         # print(f'areas: {areas}')
 
         # If you wanna colorize,
-        color = np.random.choice(range(256), size=3)
-        color = (int(color[0]), int(color[1]), int(color[2]))
-        cv2.fillPoly(world, areas, tuple(color))
+        # color = np.random.choice(range(256), size=3)
+        # color = (int(color[0]), int(color[1]), int(color[2]))
+        # cv2.fillPoly(world, areas, tuple(color))
 
         # Real map
-        # room_or_block = ((255, 255, 255), (0, 0, 0))
-        # color = random.choices(room_or_block, weights=[0.5, 0.5])
+        room_or_block = ((255, 255, 255), (0, 0, 0))
+        color = random.choices(room_or_block, weights=[0.5, 0.5])
         # print(f'color: {color}')
-        # cv2.fillPoly(world, areas, color[0])
+        cv2.fillPoly(world, areas, color[0])
 
         # 번갈아 가면서 선택하면 조금 더 듬성등성? 될 줄 알았는데
         # color = room_or_block[r]
@@ -197,19 +196,29 @@ def get_voronoi_map(num_rooms, world):
         # cv2.fillPoly(world, areas, color)
         # r += 1
 
+    # print(f'world:\n{world}')
     cv2.imshow('test', world)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    return None
+    world[world == 255] = 1
+    w_loc = np.where(world == 1)
+    w_loc = [(w_loc[1][i], w_loc[0][i]) for i in range(len(w_loc[0]))]
 
-get_voronoi_map(NUM_ROOMS, world)
+    return w_loc
+
+# ---- TEST FOR VORONOI ----
+# world = np.zeros((500, 500))
+# NUM_ROOMS = 50
+# voronoi(world, NUM_ROOMS)
+
 
 # ---- THE SIMPLEST MAP WITH WALLS ----
-def make_walls(num_walls, map_width, map_height, map):
+def walls(map, num_walls):
     """
     the map is occupied(1) by some walls
     """
+    map_width, map_height = map.shape
     wall_loc = []
     for i in range(num_walls):
         # Starting point of the wall
@@ -244,9 +253,8 @@ def make_walls(num_walls, map_width, map_height, map):
 
         # If the pixel is occupied by the wall, let's put 1 there
         for coord in zip(xs, ys):
-            map[ys, xs] = 1
+            map[xs, ys] = 1
             wall_loc.append(coord)
 
     return wall_loc
 
-# Voronoi algorithm

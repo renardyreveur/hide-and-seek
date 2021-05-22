@@ -32,8 +32,11 @@ class World:
         # ---- Map configurations ----
         mw, mh = map_size
         self.width, self.height = np.random.randint(mw // 2, mw), np.random.randint(mh // 2, mh)
-        # print(f'map.shape: ({self.width}, {self.height})')
-        self.num_walls = np.random.randint(max_num_walls // 2, max_num_walls)
+        # self.num_walls = np.random.randint(max_num_walls // 2, max_num_walls)
+        self.num_walls = 20
+
+        print(f'Map Size:\nWidth: {self.width}, Height: {self.height}\nNum Walls: {self.num_walls}')
+        print("\n Map Legend: {1: walls, 2: hiders, 3: seekers}")
 
         # Create empty map (+ borders if requested)
         self.map = np.zeros((self.height, self.width))
@@ -43,13 +46,12 @@ class World:
             self.width += 10
             self.height += 10
 
+        print(f'Map Size with borders: {self.map.shape}')
         # Add walls to the map
-
         self.wall_loc = getattr(interesting_maps, map_type)(self.map, self.num_walls)
         # print(f'wall_loc: {self.wall_loc}')
 
-        print(f'Map Size:\nWidth: {self.width}, Height: {self.height}\nNum Walls: {self.num_walls}')
-        print("\n Map Legend: {1: walls, 2: hiders, 3: seekers}")
+
 
         # ---- Agent configurations ----
         num_hiders, num_seekers = agent_config
@@ -230,6 +232,8 @@ class World:
         self.map = np.zeros((self.height - 10, self.width - 10))
         if self.borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
+
+        print(f'self.map.shape: {self.map.shape}')
         for pt in self.wall_loc:
             self.map[pt[::-1]] = 1  # IndexError
 

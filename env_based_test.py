@@ -7,7 +7,7 @@ MAX_TIMESTEP = 300
 SAVE_VID = False
 
 # ---- World Gen. Parameters ----
-map_type = "voronoi"
+map_type = "amongUs"
 
 agent_cfg = (2, 2)                # num. hiders, num. seekers
 agent_kwargs = {
@@ -19,10 +19,11 @@ agent_kwargs = {
     "count": 0
 }
 
-map_size = (600, 600)             # maximum map size
-max_num_walls = 100               # maximum number of walls - large number required for the voronoi map
-borders = True                    # border settings of the map
-sound_lim = 90                    # all sounds above 90 dB are damaging the inner ear
+
+map_size = (1200, 600)             # maximum map size
+max_num_walls = 10                  # maximum number of walls - large number required for the voronoi map(100), random_walk
+borders = True                      # border settings of the map
+sound_lim = 90                      # all sounds above 90 dB are damaging the inner ear
 
 
 # Generate our test WORLD!!!
@@ -60,7 +61,7 @@ for t in range(MAX_TIMESTEP):
 
     cv2.imshow("WORLD!", show_world)
     cv2.imshow("map", world.map)
-    k = cv2.waitKey(0)
+    k = cv2.waitKey(1)
     if k == 27:
         break
 

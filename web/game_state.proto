@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package game;
+
+message Point{
+    int32 x = 1;
+    int32 y = 2;
+}
+
+message Agent{
+    int32 agent_class = 1;
+    Point location = 2;
+}
+
+message Size{
+    int32 width = 1;
+    int32 height = 2;
+}
+
+message GameState{
+    repeated Point walls = 1;
+    repeated Agent agents = 2;
+    Size mapsize = 3;
+}

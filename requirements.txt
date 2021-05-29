@@ -1,3 +1,6 @@
 numpy
 numba
 opencv-python
+scipy
+websockets
+

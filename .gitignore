@@ -1,4 +1,10 @@
+# Cache Files
 .idea
 .vscode
 __pycache__
+
+# Virtual Environment
 venv
+
+# Node package sources
+web/client/node_modules

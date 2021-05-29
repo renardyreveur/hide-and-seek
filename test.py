@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 from numba import njit
 
-from agent import Agent
-from environment import Map
+from world.agent import Agent
+from world.environment import Map
 
 # ---- SINGLE AGENT ----
 max_speed = 30

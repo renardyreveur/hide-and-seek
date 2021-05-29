@@ -1,2 +1,2 @@
-from .agent import Agent
-from .actions import *
+from agent.agent import Agent
+from agent.actions import *

@@ -1,5 +1,4 @@
 import sys
-import random
 
 import asyncio
 import websockets
@@ -10,6 +9,8 @@ from environment import World
 
 
 # ---- World Gen. Parameters ----
+map_type = "amongUs"
+
 agent_cfg = (2, 2)                # num. hiders, num. seekers
 agent_kwargs = {
     "max_speed": 10,              # max speed of an agent
@@ -28,7 +29,7 @@ sound_lim = 90                    # all sounds above 90 dB are damaging the inne
 
 async def game_state(websocket, path):
     # Generate our test WORLD!!!
-    world = World(agent_cfg, agent_kwargs, map_size, max_num_walls, borders, sound_lim)
+    world = World(map_type, agent_cfg, agent_kwargs, map_size, max_num_walls, borders, sound_lim)
     map_h, map_w = world.map.shape[:2]
     wall_loc = [GameState.Point(x=x, y=y) for (x, y) in world.wall_loc]
     while True:
@@ -37,8 +38,8 @@ async def game_state(websocket, path):
         agents = world.agents
         a_class = [x.agt_class for x in agents]
         agent_loc = world.agent_loc
-        print(agent_loc)
-        agent_bytes = [GameState.Agent(agent_class=a_class[i], location=GameState.Point(x=agent_loc[i][0], y=agent_loc[i][1])) for i in range(len(a_class))]
+        agent_bytes = [GameState.Agent(agent_class=a_class[i], location=GameState.Point(x=agent_loc[i][0], y=agent_loc[i][1]))
+                       for i in range(len(a_class))]
 
         gs = GameState.GameState(walls=wall_loc,
                                  agents=agent_bytes,

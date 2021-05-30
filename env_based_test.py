@@ -7,7 +7,8 @@ MAX_TIMESTEP = 300
 SAVE_VID = False
 
 # ---- World Gen. Parameters ----
-map_type = "amongUs"
+map_type = "random_walk"
+
 
 agent_cfg = (2, 2)                # num. hiders, num. seekers
 agent_kwargs = {
@@ -21,7 +22,7 @@ agent_kwargs = {
 
 
 map_size = (1200, 600)             # maximum map size
-max_num_walls = 10                  # maximum number of walls - large number required for the voronoi map(100), random_walk
+max_num_walls = 20                  # maximum number of walls - large number required for the voronoi map(100), random_walk
 borders = True                      # border settings of the map
 sound_lim = 90                      # all sounds above 90 dB are damaging the inner ear
 

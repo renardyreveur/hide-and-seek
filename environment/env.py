@@ -32,8 +32,8 @@ class World:
         # ---- Map configurations ----
         mw, mh = map_size
         self.width, self.height = np.random.randint(mw // 2, mw), np.random.randint(mh // 2, mh)
-        # self.num_walls = np.random.randint(max_num_walls // 2, max_num_walls)
-        self.num_walls = 20
+        self.num_walls = np.random.randint(max_num_walls // 2, max_num_walls)
+        # self.num_walls = 20
 
         print(f'Map Size:\nWidth: {self.width}, Height: {self.height}\nNum Walls: {self.num_walls}')
         print("\n Map Legend: {1: walls, 2: hiders, 3: seekers}")

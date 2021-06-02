@@ -159,11 +159,25 @@ class World:
 
         # Get list of agents who sent a communication signal holding their relative bearing and distance
         if agent_id in self.comm_list:
+            # print(f'Agent {agent_id} (agt_class: {self.agents[agent_id].agt_class}) is trying to communicate...')
             # Communication is only updated for teammates
             comm = get_communication(self.agent_loc, self.agents, agent_id)
-            teammates = [a for a in self.agents if a.uid != agent_id and a.agt_class == agent.agt_class]
-            for agt in teammates:
-                agt.comm = comm[agt.uid]
+            # print(f'comm... {comm}')
+            if comm is not None:
+                for k in comm[0].keys():
+                    self.agents[k].comm.append((comm[0][k], comm[1][k]))
+                    a = self.agents[k].comm
+                    print(f'ang: {max(a, key=lambda a: a[0])[1]}')
+                    self.agents[k].angle += max(a, key=lambda a: a[0])[1]
+
+            else:
+                print('No one is trying to communicate!')
+
+            #     print(f'Agent {agent_id} failed to communicate... agent[{agent_id}].count: {self.agents[agent_id].count}')
+            # teammates = [a for i, a in enumerate(self.agents) if
+            #              i != agent_id and a.agt_class == self.agents[agent_id].agt_class]
+            # for j, agt in enumerate(teammates):
+            #     agt.comm = comm[j]
 
     # World update function
     def update(self):
@@ -227,6 +241,9 @@ class World:
         self.tagger_list = []
 
     def refresh_map(self):
+        # print("Communication Refreshed!")
+        for i in range(len(self.agents)):
+            self.agents[i].comm = []
         self.map = np.zeros((self.height - 10, self.width - 10))
         if self.borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)

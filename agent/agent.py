@@ -43,6 +43,8 @@ class Agent:
         """
         # --- Policy ---
         vision_array = self.vision[1]
+        comm_ = random.choice([0, 1, 2, 3, 4])
+        # comm_ = 1
         # If wall in vision, rotate
         if 1 in vision_array[0]:
             action = 1
@@ -56,6 +58,10 @@ class Agent:
         # If hider in front, tag
         elif self.agt_class == 3 and 2 in vision_array[0] and vision_array[1][list(vision_array[0]).index(2)] < 60:
             action = 2
+            action_param = {}
+
+        elif comm_ == 1 and self.count < 10:
+            action = 3
             action_param = {}
 
         # When there isn't a special event, just move forward

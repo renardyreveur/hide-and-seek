@@ -149,36 +149,48 @@ def get_sound(locs, agents, agent_id, sound_limit):
 # 만약 카운트(get comm 할 수 있는 횟수)를 다 썼으면 아무것도 반환하지 않는다.
 
 def get_communication(locs, agents, agent_id):
-    dist = []
-    orient = []
+    dist = {}
+    orient = {}
 
-    if agents[agent_id].count > 1:  # return empty list
-        pass
-    else:
-        agents[agent_id].count += 1
-        # position of the agent_i
-        pos_x, pos_y = locs[agent_id]
+    # if agents[agent_id].count > 5:  # return empty list
+    #     print(f"Agent {agent_id} tried to communicate but failed...")
+    #     pass
 
-        for i in range(len(locs)):
-            if i == agent_id or agents[i].agt_class != agents[agent_id].agt_class:
-                continue
+    # else:
+    print(f'Agent{agent_id} has {10-agents[agent_id].count} more chances to communicate!')
+    agents[agent_id].count += 1
+    # position of the agent_i
+    pos_x, pos_y = locs[agent_id]
 
-            # get distance
-            p_x, p_y = locs[i]
-            dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
+    for i in range(len(locs)):
+        if i == agent_id or agents[i].agt_class != agents[agent_id].agt_class:
+            continue
 
-            # get direction of the agent (get_comm을 호출한)
-            vision_ang_i = agents[i].angle
-            v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
-            vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
+        # get distance
+        p_x, p_y = locs[i]
+        # dist = (p_x - pos_x) ** 2 + (p_y - pos_y) ** 2
+        dist[i] = (p_x - pos_x) ** 2 + (p_y - pos_y) ** 2
+        # dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
 
-            # Direct way to computing clockwise angle between 2 vectors
-            # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
-            dot = v_x * vi_x + v_y * vi_y
-            det = v_x * vi_y - v_y * vi_x
+        # get direction of the agent (get_comm을 호출한)
+        vision_ang_i = agents[i].angle
+        v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
+        vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
 
-            # The atan2() function returns a value in the range -pi to pi radians.
-            ang_i = math.atan2(det, dot)
-            orient.append(ang_i)
+        # Direct way to computing clockwise angle between 2 vectors
+        # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
+        dot = v_x * vi_x + v_y * vi_y
+        det = v_x * vi_y - v_y * vi_x
+
+        # The atan2() function returns a value in the range -pi to pi radians.
+        ang_i = math.atan2(det, dot)
+        orient[i] = ang_i
+        # orient.append(ang_i)
+
+        # agents[i].comm.append([dist, ang_i])
+    print(f'id: {agent_id}, dist: {dist}, orient: {orient}')
+    for i in range(len(agents)):
+        if i in dist.keys():
+            print(f'Agent {i} got a signal from Agent {agent_id}... (dist: {dist[i]}, orient: {orient[i]})')
 
     return dist, orient

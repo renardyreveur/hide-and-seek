@@ -1,7 +1,9 @@
+import random
 import sys
 
 import asyncio
 import websockets
+import time
 
 sys.path.append("./")
 import game_state_pb2 as GameState
@@ -32,20 +34,28 @@ async def game_state(websocket, path):
     world = World(map_type, agent_cfg, agent_kwargs, map_size, max_num_walls, borders, sound_lim)
     map_h, map_w = world.map.shape[:2]
     wall_loc = [GameState.Point(x=x, y=y) for (x, y) in world.wall_loc]
-    while True:
-        # World update!
-        world.update()
-        agents = world.agents
-        a_class = [x.agt_class for x in agents]
-        agent_loc = world.agent_loc
-        agent_bytes = [GameState.Agent(agent_class=a_class[i], location=GameState.Point(x=agent_loc[i][0], y=agent_loc[i][1]))
-                       for i in range(len(a_class))]
 
-        gs = GameState.GameState(walls=wall_loc,
-                                 agents=agent_bytes,
-                                 mapsize=GameState.Size(width=map_w, height=map_h))
-        await websocket.send(gs.SerializeToString())
-        # await asyncio.sleep(random.random() * 1)
+    start = time.time()
+    while True:
+        current_time = time.time()
+        delta_time = current_time - start
+        if delta_time > 0.03:
+            world.update()
+            agents = world.agents
+            a_class = [x.agt_class for x in agents]
+            a_loc = world.agent_loc
+            agent_bytes = [GameState.Agent(uid=a.uid,
+                                           agent_class=a_class[a.uid],
+                                           location=GameState.Point(**dict(zip(("x", "y"), a_loc[a.uid]))))
+                           for a in agents]
+
+            gs = GameState.GameState(walls=wall_loc,
+                                     agents=agent_bytes,
+                                     mapsize=GameState.Size(width=map_w, height=map_h))
+            print(delta_time)
+            await websocket.send(gs.SerializeToString())
+            print("HERE")
+            start = time.time()
 
 start_server = websockets.serve(game_state, "localhost", 7393)
 asyncio.get_event_loop().run_until_complete(start_server)

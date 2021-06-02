@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='game',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x10game_state.proto\x12\x04game\"\x1d\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x05\x12\t\n\x01y\x18\x02 \x01(\x05\";\n\x05\x41gent\x12\x13\n\x0b\x61gent_class\x18\x01 \x01(\x05\x12\x1d\n\x08location\x18\x02 \x01(\x0b\x32\x0b.game.Point\"%\n\x04Size\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\"a\n\tGameState\x12\x1a\n\x05walls\x18\x01 \x03(\x0b\x32\x0b.game.Point\x12\x1b\n\x06\x61gents\x18\x02 \x03(\x0b\x32\x0b.game.Agent\x12\x1b\n\x07mapsize\x18\x03 \x01(\x0b\x32\n.game.Sizeb\x06proto3')
+  serialized_pb=_b('\n\x10game_state.proto\x12\x04game\"\x1d\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x05\x12\t\n\x01y\x18\x02 \x01(\x05\"H\n\x05\x41gent\x12\x0b\n\x03uid\x18\x01 \x01(\x05\x12\x13\n\x0b\x61gent_class\x18\x02 \x01(\x05\x12\x1d\n\x08location\x18\x03 \x01(\x0b\x32\x0b.game.Point\"%\n\x04Size\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\"a\n\tGameState\x12\x1a\n\x05walls\x18\x01 \x03(\x0b\x32\x0b.game.Point\x12\x1b\n\x06\x61gents\x18\x02 \x03(\x0b\x32\x0b.game.Agent\x12\x1b\n\x07mapsize\x18\x03 \x01(\x0b\x32\n.game.Sizeb\x06proto3')
 )
 
 
@@ -71,15 +71,22 @@ _AGENT = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='agent_class', full_name='game.Agent.agent_class', index=0,
+      name='uid', full_name='game.Agent.uid', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='location', full_name='game.Agent.location', index=1,
-      number=2, type=11, cpp_type=10, label=1,
+      name='agent_class', full_name='game.Agent.agent_class', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='location', full_name='game.Agent.location', index=2,
+      number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -97,7 +104,7 @@ _AGENT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=57,
-  serialized_end=116,
+  serialized_end=129,
 )
 
 
@@ -134,8 +141,8 @@ _SIZE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=118,
-  serialized_end=155,
+  serialized_start=131,
+  serialized_end=168,
 )
 
 
@@ -179,8 +186,8 @@ _GAMESTATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=157,
-  serialized_end=254,
+  serialized_start=170,
+  serialized_end=267,
 )
 
 _AGENT.fields_by_name['location'].message_type = _POINT

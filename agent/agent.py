@@ -6,9 +6,10 @@ from typing import Tuple
 
 
 class Agent:
-    def __init__(self, agt_class: int, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
+    def __init__(self, uid: int, agt_class: int, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
                  visual_scope: Tuple[int, float], size: int, count: int):
         # Fixed attributes
+        self.uid = uid
         self.max_speed = max_speed
         self.max_stamina = max_stamina
         self.accel_limit = accel_limit

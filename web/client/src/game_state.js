@@ -234,6 +234,7 @@ $root.game = (function() {
          * Properties of an Agent.
          * @memberof game
          * @interface IAgent
+         * @property {number|null} [uid] Agent uid
          * @property {number|null} [agentClass] Agent agentClass
          * @property {game.IPoint|null} [location] Agent location
          */
@@ -252,6 +253,14 @@ $root.game = (function() {
                     if (properties[keys[i]] != null)
                         this[keys[i]] = properties[keys[i]];
         }
+
+        /**
+         * Agent uid.
+         * @member {number} uid
+         * @memberof game.Agent
+         * @instance
+         */
+        Agent.prototype.uid = 0;
 
         /**
          * Agent agentClass.
@@ -293,10 +302,12 @@ $root.game = (function() {
         Agent.encode = function encode(message, writer) {
             if (!writer)
                 writer = $Writer.create();
+            if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.uid);
             if (message.agentClass != null && Object.hasOwnProperty.call(message, "agentClass"))
-                writer.uint32(/* id 1, wireType 0 =*/8).int32(message.agentClass);
+                writer.uint32(/* id 2, wireType 0 =*/16).int32(message.agentClass);
             if (message.location != null && Object.hasOwnProperty.call(message, "location"))
-                $root.game.Point.encode(message.location, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                $root.game.Point.encode(message.location, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
             return writer;
         };
 
@@ -332,9 +343,12 @@ $root.game = (function() {
                 var tag = reader.uint32();
                 switch (tag >>> 3) {
                 case 1:
-                    message.agentClass = reader.int32();
+                    message.uid = reader.int32();
                     break;
                 case 2:
+                    message.agentClass = reader.int32();
+                    break;
+                case 3:
                     message.location = $root.game.Point.decode(reader, reader.uint32());
                     break;
                 default:
@@ -372,6 +386,9 @@ $root.game = (function() {
         Agent.verify = function verify(message) {
             if (typeof message !== "object" || message === null)
                 return "object expected";
+            if (message.uid != null && message.hasOwnProperty("uid"))
+                if (!$util.isInteger(message.uid))
+                    return "uid: integer expected";
             if (message.agentClass != null && message.hasOwnProperty("agentClass"))
                 if (!$util.isInteger(message.agentClass))
                     return "agentClass: integer expected";
@@ -395,6 +412,8 @@ $root.game = (function() {
             if (object instanceof $root.game.Agent)
                 return object;
             var message = new $root.game.Agent();
+            if (object.uid != null)
+                message.uid = object.uid | 0;
             if (object.agentClass != null)
                 message.agentClass = object.agentClass | 0;
             if (object.location != null) {
@@ -419,9 +438,12 @@ $root.game = (function() {
                 options = {};
             var object = {};
             if (options.defaults) {
+                object.uid = 0;
                 object.agentClass = 0;
                 object.location = null;
             }
+            if (message.uid != null && message.hasOwnProperty("uid"))
+                object.uid = message.uid;
             if (message.agentClass != null && message.hasOwnProperty("agentClass"))
                 object.agentClass = message.agentClass;
             if (message.location != null && message.hasOwnProperty("location"))

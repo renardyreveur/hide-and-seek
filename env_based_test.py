@@ -45,9 +45,9 @@ for t in range(MAX_TIMESTEP):
     world.update()
 
     # Get update results per agent
-    for i, agt in enumerate(world.agents):
+    for agt in world.agents:
         # Get agent location to draw
-        x, y = world.agent_loc[i]
+        x, y = world.agent_loc[agt.uid]
 
         # Draw Agent
         color = (200, 150, 0) if agt.agt_class == 2 else (0, 200, 200)

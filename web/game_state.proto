@@ -8,8 +8,9 @@ message Point{
 }
 
 message Agent{
-    int32 agent_class = 1;
-    Point location = 2;
+    int32 uid = 1;
+    int32 agent_class = 2;
+    Point location = 3;
 }
 
 message Size{

@@ -6,8 +6,8 @@ from typing import Tuple
 
 
 class Agent:
-    def __init__(self, uid: int, agt_class: int, max_speed: float, max_stamina: float, accel_limit: Tuple[float, float],
-                 visual_scope: Tuple[int, float], size: int, count: int):
+    def __init__(self, uid: int, agt_class: int, size: int, max_speed: float, max_stamina: float,
+                 accel_limit: Tuple[float, float], visual_scope: Tuple[int, float], comm_limit: int):
         # Fixed attributes
         self.uid = uid
         self.max_speed = max_speed
@@ -22,13 +22,15 @@ class Agent:
         self.vision = ((0, 0), np.zeros((2, self.scope[1])))  # First row - vision, Second row - distance
         self.sound = []  # Length = Number of agents around me
         self.comm = []  # Length = Number of agents that sent a signal
-        self.count = count
+        self.comm_limit = comm_limit  # Number of communication events an agent can invoke in it's lifetime
+        self.comm_count = 0
 
         # State history
         self.history = []
 
         # --- Movement State ---
         self.angle = random.randint(0, 360) * math.pi / 180
+
         self.speed = 0
         self.stamina = max_stamina
 
@@ -41,28 +43,55 @@ class Agent:
 
         :return: action choice, action parameters
         """
-        # --- Policy ---
+        # --- Ruled Based Test Policy ---
+
+        if self.uid == 0:
+            if random.choice(list(range(50))) == 1 and self.comm_count < self.comm_limit:
+                action = 3
+                action_param = {}
+                self.comm_count += 1
+            else:
+                action = 1
+                action_param = {"ang_accel": (0 * math.pi / 180), "accel": 0}
+            return action, action_param
+
         vision_array = self.vision[1]
-        comm_ = random.choice([0, 1, 2, 3, 4])
-        # comm_ = 1
+
         # If wall in vision, rotate
         if 1 in vision_array[0]:
             action = 1
             action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": -10}
 
         # If stationary for 3 time steps rotate
-        elif len(set(self.history)) == 1:
-            action = 1
-            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": 0}
+        # elif len(set(self.history)) == 1:
+        #     action = 1
+        #     action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": 0}
 
         # If hider in front, tag
         elif self.agt_class == 3 and 2 in vision_array[0] and vision_array[1][list(vision_array[0]).index(2)] < 60:
             action = 2
             action_param = {}
 
-        elif comm_ == 1 and self.count < 10:
-            action = 3
-            action_param = {}
+        # Randomly invoked communication event
+        # elif random.choice(list(range(50))) == 1 and self.comm_count < self.comm_limit:
+        #     action = 3
+        #     action_param = {}
+        #     self.comm_count += 1
+
+        # If communication received head towards nearest comm. agent for three steps
+        elif len(self.comm) > 0:
+            closest_agent = min(self.comm, key=lambda x: x[0])
+            print(closest_agent[1])
+            self.history.append(closest_agent[1] - self.angle)
+            action = 1
+            action_param = {"ang_accel": (closest_agent[1]*(math.pi/10)/abs(closest_agent[1])), "accel": -5}
+
+        elif len(self.history) > 0:
+            print("HEHEHEHEHE")
+            action = 1
+            action_param = {"ang_accel": (self.history[-1]*(math.pi/10)/abs(self.history[-1])), "accel": -5}
+            if self.history[-1] - math.pi/9 < self.angle < self.history[-1] + math.pi/9:
+                self.history.pop(-1)
 
         # When there isn't a special event, just move forward
         else:

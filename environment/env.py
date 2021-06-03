@@ -10,10 +10,10 @@ import numpy as np
 # test_agent is in the environment folder
 from agent import Agent, actions
 # Get states
-from .get_states import get_vision, get_sound, get_communication
+from .get_states import get_vision, get_sound, send_communication
 
 # from .interesting_maps import *
-from . import interesting_maps
+from . import maps
 
 # If you get a truncated representation, but want the full array, try
 np.set_printoptions(threshold=sys.maxsize)
@@ -33,7 +33,6 @@ class World:
         mw, mh = map_size
         self.width, self.height = np.random.randint(mw // 2, mw), np.random.randint(mh // 2, mh)
         self.num_walls = np.random.randint(max_num_walls // 2, max_num_walls)
-        # self.num_walls = 20
 
         print(f'Map Size:\nWidth: {self.width}, Height: {self.height}\nNum Walls: {self.num_walls}')
         print("\n Map Legend: {1: walls, 2: hiders, 3: seekers}")
@@ -45,11 +44,10 @@ class World:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
             self.width += 10
             self.height += 10
-
         print(f'Map Size with borders: {self.map.shape}')
+
         # Add walls to the map
-        self.wall_loc = getattr(interesting_maps, map_type)(self.map, self.num_walls)
-        # print(f'wall_loc: {self.wall_loc}')
+        self.wall_loc = getattr(maps, map_type)(self.map, self.num_walls)
 
         # ---- Agent configurations ----
         num_hiders, num_seekers = agent_config
@@ -159,25 +157,8 @@ class World:
 
         # Get list of agents who sent a communication signal holding their relative bearing and distance
         if agent_id in self.comm_list:
-            # print(f'Agent {agent_id} (agt_class: {self.agents[agent_id].agt_class}) is trying to communicate...')
             # Communication is only updated for teammates
-            comm = get_communication(self.agent_loc, self.agents, agent_id)
-            # print(f'comm... {comm}')
-            if comm is not None:
-                for k in comm[0].keys():
-                    self.agents[k].comm.append((comm[0][k], comm[1][k]))
-                    a = self.agents[k].comm
-                    print(f'ang: {max(a, key=lambda a: a[0])[1]}')
-                    self.agents[k].angle += max(a, key=lambda a: a[0])[1]
-
-            else:
-                print('No one is trying to communicate!')
-
-            #     print(f'Agent {agent_id} failed to communicate... agent[{agent_id}].count: {self.agents[agent_id].count}')
-            # teammates = [a for i, a in enumerate(self.agents) if
-            #              i != agent_id and a.agt_class == self.agents[agent_id].agt_class]
-            # for j, agt in enumerate(teammates):
-            #     agt.comm = comm[j]
+            send_communication(self.agent_loc, self.agents, agent_id)
 
     # World update function
     def update(self):
@@ -196,7 +177,10 @@ class World:
                 2: "tag",
                 3: "communicate"
             }
-            print(f"AgentID: {agt.uid, agt.agt_class}, Action: {acts[action].upper()}, Params: {action_param}")
+            print(f"AgentID: {agt.uid, agt.agt_class},"
+                  f" Action: {acts[action].upper()},"
+                  f" Params: {action_param},"
+                  f" Comm: {agt.comm_count}/{agt.comm_limit}")
 
             # Action results
             dx, dy, tag, comm = getattr(actions, acts[action])(agt, **action_param)
@@ -241,9 +225,10 @@ class World:
         self.tagger_list = []
 
     def refresh_map(self):
-        # print("Communication Refreshed!")
-        for i in range(len(self.agents)):
-            self.agents[i].comm = []
+        # Refresh communication
+        for agt in self.agents:
+            agt.comm = []
+
         self.map = np.zeros((self.height - 10, self.width - 10))
         if self.borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)

@@ -148,32 +148,26 @@ def get_sound(locs, agents, agent_id, sound_limit):
 # 죽은 에이전트는 죽었으니 정지한 상태일까? 어쨋든 죽었든 살았든 반환개수는 에이전트 개수만큼 하는 게 좋을 것 같은데
 # 만약 카운트(get comm 할 수 있는 횟수)를 다 썼으면 아무것도 반환하지 않는다.
 
-def get_communication(locs, agents, agent_id):
-    dist = {}
-    orient = {}
+def send_communication(locs, agents, agent_id):
+    agent = next((x for x in agents if x.uid == agent_id), None)
 
-    # if agents[agent_id].count > 5:  # return empty list
-    #     print(f"Agent {agent_id} tried to communicate but failed...")
-    #     pass
-
-    # else:
-    print(f'Agent{agent_id} has {10-agents[agent_id].count} more chances to communicate!')
-    agents[agent_id].count += 1
     # position of the agent_i
     pos_x, pos_y = locs[agent_id]
 
-    for i in range(len(locs)):
-        if i == agent_id or agents[i].agt_class != agents[agent_id].agt_class:
+    for uid, location in locs.items():
+        # Agent in question
+        aiq = next((x for x in agents if x.uid == uid), None)
+
+        # If yourself, or other team, skip
+        if uid == agent_id or aiq.agt_class != agent.agt_class:
             continue
 
-        # get distance
-        p_x, p_y = locs[i]
-        # dist = (p_x - pos_x) ** 2 + (p_y - pos_y) ** 2
-        dist[i] = (p_x - pos_x) ** 2 + (p_y - pos_y) ** 2
-        # dist.append((p_x - pos_x) ** 2 + (p_y - pos_y) ** 2)
+        # Get distance to the other agent
+        p_x, p_y = location
+        distance = (p_x - pos_x) ** 2 + (p_y - pos_y) ** 2
 
-        # get direction of the agent (get_comm을 호출한)
-        vision_ang_i = agents[i].angle
+        # Get direction of the agent (from it's view to the other agent's location)
+        vision_ang_i = aiq.angle
         v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
         vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
 
@@ -184,13 +178,8 @@ def get_communication(locs, agents, agent_id):
 
         # The atan2() function returns a value in the range -pi to pi radians.
         ang_i = math.atan2(det, dot)
-        orient[i] = ang_i
-        # orient.append(ang_i)
+        bearing = ang_i
 
-        # agents[i].comm.append([dist, ang_i])
-    print(f'id: {agent_id}, dist: {dist}, orient: {orient}')
-    for i in range(len(agents)):
-        if i in dist.keys():
-            print(f'Agent {i} got a signal from Agent {agent_id}... (dist: {dist[i]}, orient: {orient[i]})')
+        # Update all the other agent's states with the communication record
+        aiq.comm.append([distance, bearing])
 
-    return dist, orient

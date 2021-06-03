@@ -107,15 +107,9 @@ socket.onmessage = function (event) {
 	// 		selectedAgent.position.y = location.y
 	// 	}
 	// }
-	// 	socket.send("HEHE")
 
 };
 
-// scene.add(wall_group);
-// for (const chi in wall_group.children){
-// 	console.log(chi)
-// }
-// scene.add(agent_group);
 
 camera.position.x = window.innerWidth / 4
 camera.position.y = window.innerHeight / 4

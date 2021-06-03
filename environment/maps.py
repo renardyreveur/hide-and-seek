@@ -1,8 +1,7 @@
 import math
 import operator
 import random
-import sys
-from random import shuffle
+
 import cv2
 import numpy as np
 from scipy.spatial import Voronoi
@@ -13,8 +12,11 @@ from . import map_util
 # If you want to run this script as a main file, comment the above code, and try with the below.
 # import map_util
 
+def empty_map(world, num):
+    return []
 
-def amongUs(world, num_rooms, border=100):
+
+def among_us(world, num_rooms, border=100):
     world = np.ones(world.shape)
 
     # print(f'or_world.shape: {world.shape}')
@@ -277,7 +279,7 @@ def voronoi(world, num_rooms, enl_w=5):
 
 
 # ---- THE SIMPLEST MAP WITH WALLS ----
-def slimWall(world, num_walls):
+def slim_wall(world, num_walls):
     """
     the map is occupied(1) by some walls
     """
@@ -330,7 +332,7 @@ def slimWall(world, num_walls):
 # slimWall(wor, 20)
 
 
-def fatWall(world, num_walls, thickness=5):
+def fat_wall(world, num_walls, thickness=5):
     # world = np.ones(world.shape)
     h, w = world.shape
 
@@ -397,7 +399,7 @@ def fatWall(world, num_walls, thickness=5):
 
 
 # Binary tree maze map
-def binaryMaze(world, num_paths, border=50):
+def binary_maze(world, num_paths, border=50):
     world = np.ones(world.shape)
 
     # print(f'or_world.shape: {world.shape}')

@@ -1,3 +1,5 @@
+import math
+
 import cv2
 
 from environment import World
@@ -10,18 +12,18 @@ SAVE_VID = False
 map_type = "empty_map"
 
 
-agent_cfg = (0, 2)                # num. hiders, num. seekers
+agent_cfg = (0, 3)                # num. hiders, num. seekers
 agent_kwargs = {
-    "max_speed": 10,              # max speed of an agent
-    "max_stamina": 10,            # max stamina of an agent
-    "accel_limit": (45, 5),       # acceleration limit (angular, linear)
-    "visual_scope": (90, 55),     # visual scope (angular, max_distance)
-    "size": 5,                    # agent size
-    "comm_limit": 10
+    "max_speed": 10,                  # max speed of an agent
+    "max_stamina": 100,                # max stamina of an agent
+    "accel_limit": (10, math.pi/4),    # acceleration limit (linear, angular)
+    "visual_scope": (90, 55),         # visual scope (angular, max_distance)
+    "size": 5,                        # agent size
+    "comm_limit": 5
 }
 
 
-map_size = (1200, 1200)     # maximum map size
+map_size = (1000, 1000)     # maximum map size
 max_num_walls = 20          # maximum number of walls - large number required for the voronoi map(100), random_walk
 borders = True              # border settings of the map
 sound_lim = 90              # all sounds above 90 dB are damaging the inner ear
@@ -62,7 +64,7 @@ for t in range(MAX_TIMESTEP):
         v_writer.write(show_world)
 
     cv2.imshow("WORLD!", show_world)
-    cv2.imshow("map", world.map)
+    # cv2.imshow("map", world.map)
     k = cv2.waitKey(0)
     if k == 27:
         break

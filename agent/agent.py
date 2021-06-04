@@ -35,7 +35,6 @@ class Agent:
         self.stamina = max_stamina
 
     def action(self):
-        print(self.angle)
         """
         At every time step an action is performed.
         The action is one of three {1: "move", 2: "tag", 3: "communicate"}
@@ -45,7 +44,7 @@ class Agent:
         :return: action choice, action parameters
         """
         # --- Ruled Based Test Policy ---
-
+        # Stay still just send communication event
         if self.uid == 0:
             if random.choice(list(range(50))) == 1 and self.comm_count < self.comm_limit:
                 action = 3
@@ -56,17 +55,13 @@ class Agent:
                 action_param = {"ang_accel": (0 * math.pi / 180), "accel": 0}
             return action, action_param
 
-        vision_array = self.vision[1]
-
+        # Others
         # If wall in vision, rotate
+        vision_array = self.vision[1]
         if 1 in vision_array[0]:
+            accel = -1 if self.speed > 0 else 0
             action = 1
-            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": -10}
-
-        # If stationary for 3 time steps rotate
-        # elif len(set(self.history)) == 1:
-        #     action = 1
-        #     action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": 0}
+            action_param = {"ang_accel": (random.randint(20, 45) * math.pi / 180), "accel": accel}
 
         # If hider in front, tag
         elif self.agt_class == 3 and 2 in vision_array[0] and vision_array[1][list(vision_array[0]).index(2)] < 60:
@@ -82,24 +77,36 @@ class Agent:
         # If communication received head towards nearest comm. agent for three steps
         elif len(self.comm) > 0:
             closest_agent = min(self.comm, key=lambda x: x[0])
-            print(closest_agent[1])
-            self.history.append(closest_agent[1] - self.angle)
+
+            # Calculate target angle to the event sender
+            target_angle = closest_agent[1] + self.angle
+            target_angle = 2*math.pi + target_angle if target_angle < 0 else target_angle
+            target_angle = target_angle - 2*math.pi if target_angle > 2*math.pi else target_angle
+
+            # Add target angle to history such that the agent moves until it finds the target angle
+            self.history.append(target_angle)
             direction = closest_agent[1]/abs(closest_agent[1])
             action = 1
-            action_param = {"ang_accel": direction*math.pi/18, "accel": -1}
+            action_param = {"ang_accel": direction*math.pi/18, "accel": -1 if self.speed > 0 else 0}
 
+        # If target angle not found, continue searching
         elif len(self.history) > 0:
-            print("HEHEHEHEHE")
             direction = self.history[-1]/abs(self.history[-1])
             action = 1
-            action_param = {"ang_accel": direction*math.pi/18, "accel": -1}
-            print(self.history[-1] - math.pi/9, self.history[-1] + math.pi/9, self.angle)
+            action_param = {"ang_accel": direction*math.pi/18, "accel": -1 if self.speed > 0 else 0}
             if self.history[-1] - math.pi/9 < self.angle < self.history[-1] + math.pi/9:
                 self.history.pop(-1)
 
         # When there isn't a special event, just move forward
         else:
+            st_rate = self.stamina/self.max_stamina
+            if st_rate > 0.75:
+                accel = np.random.normal(3, 1, 1)
+            elif st_rate > 0.4:
+                accel = np.random.randint(-1, 3)
+            else:
+                accel = -1
             action = 1
-            action_param = {"ang_accel": (0 * math.pi / 180), "accel": 5}
+            action_param = {"ang_accel": (0 * math.pi / 180), "accel": accel}
 
         return action, action_param

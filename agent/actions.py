@@ -15,7 +15,7 @@ def move(agent, ang_accel=3, accel=1):
 
     # Get change in angle and speed due to the new acceleration given
     delta_angle = min(ang_acc_limit, ang_accel) if ang_accel > 0 else max(-ang_acc_limit, ang_accel)
-    delta_speed = min(acc_limit, accel) if accel > 0 else max(accel, acc_limit)
+    delta_speed = min(acc_limit, accel)  # if accel >= 0 else max(accel, acc_limit)
     # print(f"accel speed: {accel}, accel_angle: {ang_accel}")
     # print(f"accel limit: {acc_limit}, angle_limit: {ang_acc_limit}")
     # print(f"delta speed: {delta_speed}, delta_angle: {delta_angle}")

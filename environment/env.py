@@ -233,7 +233,6 @@ class World:
         if self.borders:
             self.map = np.pad(self.map, pad_width=5, mode='constant', constant_values=1.)
 
-        print(f'self.map.shape: {self.map.shape}')
         for pt in self.wall_loc:
             self.map[pt[::-1]] = 1  # IndexError
 

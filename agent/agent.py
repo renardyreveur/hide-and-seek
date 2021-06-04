@@ -35,6 +35,7 @@ class Agent:
         self.stamina = max_stamina
 
     def action(self):
+        print(self.angle)
         """
         At every time step an action is performed.
         The action is one of three {1: "move", 2: "tag", 3: "communicate"}
@@ -83,13 +84,16 @@ class Agent:
             closest_agent = min(self.comm, key=lambda x: x[0])
             print(closest_agent[1])
             self.history.append(closest_agent[1] - self.angle)
+            direction = closest_agent[1]/abs(closest_agent[1])
             action = 1
-            action_param = {"ang_accel": (closest_agent[1]*(math.pi/10)/abs(closest_agent[1])), "accel": -5}
+            action_param = {"ang_accel": direction*math.pi/18, "accel": -1}
 
         elif len(self.history) > 0:
             print("HEHEHEHEHE")
+            direction = self.history[-1]/abs(self.history[-1])
             action = 1
-            action_param = {"ang_accel": (self.history[-1]*(math.pi/10)/abs(self.history[-1])), "accel": -5}
+            action_param = {"ang_accel": direction*math.pi/18, "accel": -1}
+            print(self.history[-1] - math.pi/9, self.history[-1] + math.pi/9, self.angle)
             if self.history[-1] - math.pi/9 < self.angle < self.history[-1] + math.pi/9:
                 self.history.pop(-1)
 

@@ -171,7 +171,7 @@ def send_communication(locs, agents, agent_id):
         v_x, v_y = (math.cos(vision_ang_i), math.sin(vision_ang_i))
         vi_x, vi_y = (pos_x - p_x, pos_y - p_y)
 
-        # Direct way to computing clockwise angle between 2 vectors
+        # Direct way to compute clockwise angle between 2 vectors
         # Dot product is proportional to the cosine of the angle, the determinant is proportional to its sine.
         dot = v_x * vi_x + v_y * vi_y
         det = v_x * vi_y - v_y * vi_x
